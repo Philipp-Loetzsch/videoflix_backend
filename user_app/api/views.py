@@ -10,9 +10,9 @@ class CheckUserExistsView(GenericAPIView):
     serializer_class = CheckUserSerializer
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = CheckUserSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response(False)
+            return Response(False, status=status.HTTP_200_OK)
         return Response(True, status=status.HTTP_200_OK)
 
 
@@ -48,4 +48,4 @@ class RegisterView(GenericAPIView):
             }
             return Response(data, status=status.HTTP_200_OK)
         
-        return Response(serializer.error_messages ,status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
