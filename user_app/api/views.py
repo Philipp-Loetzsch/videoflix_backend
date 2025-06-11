@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer
+from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer, ActivateUserSerializer
 from django.contrib.auth import login
 from rest_framework.authtoken.models import Token
 
@@ -22,7 +22,7 @@ class LogInView(GenericAPIView):
     serializer_class = LogInSerializer
 
     def post(self, request):
-        serializer = LogInSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         data = {}
         if serializer.is_valid():
             user = serializer.validated_data["user"]
@@ -36,7 +36,7 @@ class RegisterView(GenericAPIView):
     serializer_class = RegisterSerializer
     
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = self.get_serializer(data=request.data)
         data={}
         if serializer.is_valid():
             saved_account = serializer.save()
@@ -49,3 +49,14 @@ class RegisterView(GenericAPIView):
             return Response(data, status=status.HTTP_200_OK)
         
         return Response(serializer.errors ,status=status.HTTP_400_BAD_REQUEST)
+    
+    
+class ActivateUserView(GenericAPIView):
+    serializer_class = ActivateUserSerializer
+    
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'detail': 'Account erfolgreich aktiviert.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

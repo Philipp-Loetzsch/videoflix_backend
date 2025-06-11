@@ -66,3 +66,22 @@ class RegisterSerializer(serializers.Serializer):
         user.is_active = False
         user.save()
         return user
+    
+class ActivateUserSerializer(serializers.Serializer):
+    token = serializers.CharField()
+
+    def validate_token(self, value):
+        try:
+            user = User.objects.get(auth_token__key=value)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Ungültiger Token.")
+        if user.is_active:
+            raise serializers.ValidationError("Benutzer ist bereits aktiviert.")
+        return value
+
+    def save(self):
+        token = self.validated_data['token']
+        user = User.objects.get(auth_token__key=token)
+        user.is_active = True
+        user.save()
+        return user
