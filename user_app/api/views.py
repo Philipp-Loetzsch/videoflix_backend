@@ -4,9 +4,11 @@ from rest_framework import status
 from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer, ActivateUserSerializer
 from django.contrib.auth import login
 from rest_framework.authtoken.models import Token
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 class CheckUserExistsView(GenericAPIView):
+    permission_classes = [AllowAny]
     serializer_class = CheckUserSerializer
 
     def post(self, request, *args, **kwargs):
@@ -17,8 +19,7 @@ class CheckUserExistsView(GenericAPIView):
 
 
 class LogInView(GenericAPIView):
-    # authentication_classes = []
-    # permission_classes = [AllowAny]
+    permission_classes = [AllowAny]
     serializer_class = LogInSerializer
 
     def post(self, request):
@@ -33,6 +34,7 @@ class LogInView(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterView(GenericAPIView):
+    permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
     
     def post(self, request):
@@ -52,6 +54,7 @@ class RegisterView(GenericAPIView):
     
     
 class ActivateUserView(GenericAPIView):
+    permission_classes = [AllowAny]
     serializer_class = ActivateUserSerializer
     
     def post(self, request):

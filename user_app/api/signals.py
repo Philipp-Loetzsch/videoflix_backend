@@ -34,7 +34,5 @@ def send_activation_email(user_id):
 
 @receiver(post_save, sender=User)
 def user_post_save(sender, instance, created, **kwargs):
-    print('🚨 post_save wurde ausgelöst!')
     if created and not instance.is_active:
-        print('📧 Aktivierungsmail wird über RQ gesendet...')
         enqueue(send_activation_email, instance.id)
