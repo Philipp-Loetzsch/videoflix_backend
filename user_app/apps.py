@@ -6,4 +6,4 @@ class UserAppConfig(AppConfig):
     name = 'user_app'
 
     def ready(self):
-        from .api import signals
+        import user_app.api.signals

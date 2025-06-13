@@ -58,12 +58,12 @@ class RegisterSerializer(serializers.Serializer):
         password = validated_data['password']
         username = email.split('@')[0]
 
-        user = User.objects.create_user(
+        user = User(
             username=username,
             email=email,
-            password=password
+            is_active = False
         )
-        user.is_active = False
+        user.set_password(password)
         user.save()
         return user
     

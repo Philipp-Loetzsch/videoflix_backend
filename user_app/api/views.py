@@ -55,6 +55,7 @@ class ActivateUserView(GenericAPIView):
     serializer_class = ActivateUserSerializer
     
     def post(self, request):
+        
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
