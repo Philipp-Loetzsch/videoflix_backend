@@ -4,7 +4,7 @@ from rest_framework import status
 from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer, ActivateUserSerializer
 from django.contrib.auth import login
 from rest_framework.authtoken.models import Token
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 
 
 class CheckUserExistsView(GenericAPIView):

@@ -50,7 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'user_app.apps.UserAppConfig',
-    'content_app',
+    'content_app.apps.ContentAppConfig',
     'django_filters',
 ]
 
