@@ -19,3 +19,5 @@ class VideoViewSet(viewsets.ModelViewSet):
             raise NotFound({'error':"video does not exist or is removed."})
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
+
+        
