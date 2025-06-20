@@ -40,7 +40,7 @@ class Video(models.Model):
     duration = models.PositiveIntegerField(
         default=0, help_text="Dauer in Sekunden", blank=True
     )
-    preview = models.FileField(upload_to=preview_upload_path)
+    preview = models.FileField(upload_to=preview_upload_path, blank=True, null=False)
     thumbnail = models.ImageField(
         upload_to=thumbnail_upload_path, blank=True, null=True, help_text="Vorschaubild"
     )
