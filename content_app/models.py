@@ -2,13 +2,15 @@ import uuid
 from django.db import models
 
 CATEGORY_CHOICES = [
-    ("HOR", "Horror"),
-    ("ACT", "Action"),
-    ("DRA", "Drama"),
-    ("COM", "Comedy"),
-    ("SCI", "Science Fiction"),
-    ("DOC", "Documentary"),
-    ("OTH", "Other"),
+    ("Horror", "Horror"),
+    ("Action", "Action"),
+    ("Drama", "Drama"),
+    ("Comedy", "Comedy"),
+    ("Science Fiction", "Science Fiction"),
+    ("Documentary", "Documentary"),
+    ("Cartoon", "Cartoon"),
+    ("Fantasy", "Fantasy"),
+    ("Other", "Other"),
 ]
 
 
@@ -29,25 +31,24 @@ class Video(models.Model):
     title = models.CharField(max_length=255, help_text="Titel des Videos")
     description = models.TextField(help_text="Beschreibung des Inhalts")
     file = models.FileField(
-        upload_to=video_upload_path, help_text="Hochgeladene Videodatei"
+        upload_to=video_upload_path, help_text="Hochgeladene Videodatei", max_length=300
     )
     hls_playlist = models.FileField(
         upload_to=video_upload_path,
         blank=True,
         null=True,
         help_text="HLS Master Playlist (.m3u8)",
+        max_length=500,
     )
     duration = models.PositiveIntegerField(
         default=0, help_text="Dauer in Sekunden", blank=True
     )
-    preview = models.FileField(upload_to=preview_upload_path, blank=True, null=False)
-    thumbnail = models.ImageField(
-        upload_to=thumbnail_upload_path, blank=True, null=True, help_text="Vorschaubild"
-    )
+    preview = models.FileField(upload_to=preview_upload_path, max_length=255, blank=True, null=False)
+    thumbnail = models.ImageField(upload_to=thumbnail_upload_path, max_length=255, blank=True, null=True, help_text="Vorschaubild")
+
     category = models.CharField(
-        max_length=3,
         choices=CATEGORY_CHOICES,
-        default="OTH",
+        default="Other",
         help_text="Hauptkategorie",
     )
     created_at = models.DateTimeField(auto_now_add=True, help_text="Erstellungsdatum")

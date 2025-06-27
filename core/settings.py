@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django_rq',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework_simplejwt',
     'user_app.apps.UserAppConfig',
     'content_app.apps.ContentAppConfig',
     'django_filters',
@@ -128,7 +129,22 @@ RQ_QUEUES = {
         'DEFAULT_TIMEOUT': 900,
         'REDIS_CLIENT_KWARGS': {},
     },
+    'fast': {
+        'HOST': os.environ.get("REDIS_HOST", default="redis"),
+        'PORT': os.environ.get("REDIS_PORT", default=6379),
+        'DB': os.environ.get("REDIS_DB", default=1),
+        'DEFAULT_TIMEOUT': 300,
+        'REDIS_CLIENT_KWARGS': {},
+    },
+    'heavy': {
+        'HOST': os.environ.get("REDIS_HOST", default="redis"),
+        'PORT': os.environ.get("REDIS_PORT", default=6379),
+        'DB': os.environ.get("REDIS_DB", default=2),
+        'DEFAULT_TIMEOUT': 3600,
+        'REDIS_CLIENT_KWARGS': {},
+    },
 }
+
 
 
 # Password validation
@@ -198,6 +214,7 @@ REST_FRAMEWORK = {
     
      'DEFAULT_AUTHENTICATION_CLASSES': [
           'rest_framework.authentication.TokenAuthentication',
+          'rest_framework_simplejwt.authentication.JWTAuthentication',
      ],
      
      'DEFAULT_FILTER_BACKENDS': [
