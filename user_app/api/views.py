@@ -5,7 +5,7 @@ from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerialize
 from django.contrib.auth import login
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
-
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 class CheckUserExistsView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -42,9 +42,9 @@ class RegisterView(GenericAPIView):
         data={}
         if serializer.is_valid():
             saved_account = serializer.save()
-            token, created = Token.objects.get_or_create(user=saved_account)
+            # token, created = Token.objects.get_or_create(user=saved_account)
             data={
-                'token': token.key,
+                # 'token': token.key,
                 'username': saved_account.username,
                 'email': saved_account.email,
             }
@@ -63,4 +63,29 @@ class ActivateUserView(GenericAPIView):
         if serializer.is_valid():
             serializer.save()
             return Response({'detail': 'Account erfolgreich aktiviert.'}, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST),
+    
+class CookieTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        refresh = response.data.get("refresh")
+        access = response.data.get("access")
+        
+        response.set_cookie(
+            key="access_token",
+            value=access,
+            httponly=True,
+            secure=True,
+            samesite="Lax"
+        )
+        
+        response.set_cookie(
+            key="refesh_token",
+            value=refresh,
+            httponly=True,
+            secure=True,
+            samesite="Lax"
+        )
+        
+        response.data = {"message": "Login erfolgreich"}
+        return response
