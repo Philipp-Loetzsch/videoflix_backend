@@ -1,8 +1,12 @@
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.hashers import check_password
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class CheckUserSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -83,3 +87,31 @@ class ActivateUserSerializer(serializers.Serializer):
         user.is_active = True
         user.save()
         return user
+    
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        if "username"in self.fields:
+            self.fields.pop("username")
+    
+    def validate(self, attrs):
+        email = attrs.get("email")
+        password = attrs.get("password")
+        
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'detail': 'user does not exist'})
+
+        if not check_password(password, user.password):
+            raise serializers.ValidationError({"detail": "Invalid credentials."})
+        
+        if not user.is_active :
+             raise serializers.ValidationError({'detail': 'User is disabled'})
+        
+        data = super().validate({"username":user.username, "password": password})
+        return data

@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer, ActivateUserSerializer
+from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer, ActivateUserSerializer, CustomTokenObtainPairSerializer
 from django.contrib.auth import login
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
@@ -66,11 +66,16 @@ class ActivateUserView(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST),
     
 class CookieTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+    
     def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        refresh = response.data.get("refresh")
-        access = response.data.get("access")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         
+        
+        refresh = serializer.validated_data["refresh"]
+        access = serializer.validated_data["access"]
+        response = Response({"message":"Login successful"})
         response.set_cookie(
             key="access_token",
             value=access,
@@ -86,6 +91,4 @@ class CookieTokenObtainPairView(TokenObtainPairView):
             secure=True,
             samesite="Lax"
         )
-        
-        response.data = {"message": "Login erfolgreich"}
         return response
