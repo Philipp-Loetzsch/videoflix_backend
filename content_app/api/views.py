@@ -7,7 +7,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
 class VideoViewSet(viewsets.ModelViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
     
