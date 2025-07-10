@@ -1,7 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CheckUserSerializer, LogInSerializer, RegisterSerializer, ActivateUserSerializer, CustomTokenObtainPairSerializer
+from .serializers import CheckUserSerializer, RegisterSerializer, ActivateUserSerializer, CustomTokenObtainPairSerializer
 from django.contrib.auth import login
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny,IsAuthenticated
@@ -16,22 +16,6 @@ class CheckUserExistsView(GenericAPIView):
         if not serializer.is_valid():
             return Response(False, status=status.HTTP_200_OK)
         return Response(True, status=status.HTTP_200_OK)
-
-
-class LogInView(GenericAPIView):
-    permission_classes = [AllowAny]
-    serializer_class = LogInSerializer
-
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
-        data = {}
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            login(request, user)
-            token, created = Token.objects.get_or_create(user=user)
-            data = {"token": token.key, "email": user.email}
-            return Response(data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class RegisterView(GenericAPIView):
     permission_classes = [AllowAny]

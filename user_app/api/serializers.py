@@ -1,9 +1,5 @@
 from django.contrib.auth import authenticate
-
-# from django.contrib.auth.models import User
 from rest_framework import serializers
-from rest_framework.authtoken.models import Token
-from django.contrib.auth.hashers import check_password
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
 
@@ -17,34 +13,6 @@ class CheckUserSerializer(serializers.Serializer):
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("User with this email does not exist.")
         return value
-
-
-class LogInSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-    password = serializers.CharField(required=True, write_only=True)
-
-    def validate(self, data):
-        email = data.get("email")
-        password = data.get("password")
-        if not email or not password:
-            raise serializers.ValidationError(
-                "Email and password are required.", code="authorization"
-            )
-
-        try:
-            user_obj = User.objects.get(email=email)
-        except User.DoesNotExist:
-            raise serializers.ValidationError({"detail": "user does not exist"})
-
-        if not check_password(password, user_obj.password):
-            raise serializers.ValidationError({"detail": "Invalid credentials."})
-
-        if not user_obj.is_active:
-            raise serializers.ValidationError({"detail": "User is disabled"})
-
-        data["user"] = user_obj
-        return data
-
 
 class RegisterSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
