@@ -9,18 +9,19 @@ from django.core.mail import EmailMultiAlternatives
 from rest_framework.authtoken.models import Token
 from pathlib import Path
 from mimetypes import guess_type
+from django.core.signing import TimestampSigner
 
 User = get_user_model()
+signer = TimestampSigner()
 
 def send_activation_email(user_id):
     try:
         user = User.objects.get(pk=user_id)
     except User.DoesNotExist:
         return
+    token = signer.sign(user.pk)
 
-    token, _ = Token.objects.get_or_create(user=user)
-    activation_link = f"{settings.FRONTEND_URL}/activate/{token.key}"
-
+    activation_link = f"{settings.FRONTEND_URL}/activate/{token}"
     html_content = render_to_string("emails/account_activation.html", {
         "user": user,
         "activation_link": activation_link
