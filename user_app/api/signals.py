@@ -10,18 +10,21 @@ from rest_framework.authtoken.models import Token
 from pathlib import Path
 from mimetypes import guess_type
 from django.core.signing import TimestampSigner
+from email.mime.image import MIMEImage
+from pathlib import Path
 
 User = get_user_model()
 signer = TimestampSigner()
-
+  
 def send_activation_email(user_id):
     try:
         user = User.objects.get(pk=user_id)
     except User.DoesNotExist:
         return
-    token = signer.sign(user.pk)
 
+    token = signer.sign(user.pk)
     activation_link = f"{settings.FRONTEND_URL}/activate/{token}"
+
     html_content = render_to_string("emails/account_activation.html", {
         "user": user,
         "activation_link": activation_link
@@ -34,19 +37,13 @@ def send_activation_email(user_id):
         to=[user.email]
     )
     email.attach_alternative(html_content, "text/html")
-
-    image_path = Path(settings.BASE_DIR) / "core" / "templates" / "emails" / "logo.png"
+    image_path = Path(settings.BASE_DIR) / "templates" / "emails" / "logo.png"
     if image_path.exists():
-        with open(image_path, "rb") as img_file:
-            image_data = img_file.read()
-            mimetype = guess_type(str(image_path))[0] or 'image/png'
-            email.attach(
-                filename="logo.png",
-                content=image_data,
-                mimetype=mimetype
-            )
-            email.attachments[-1]['Content-ID'] = '<logo_img>'
-            email.attachments[-1]['Content-Disposition'] = 'inline; filename="logo.png"'
+        with open(image_path, "rb") as img:
+            mime_img = MIMEImage(img.read())
+            mime_img.add_header("Content-ID", "<logo_img>")
+            mime_img.add_header("Content-Disposition", "inline", filename="logo.png")
+            email.attach(mime_img)
 
     email.send()
 
