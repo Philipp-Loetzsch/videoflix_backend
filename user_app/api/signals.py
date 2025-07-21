@@ -12,6 +12,7 @@ from mimetypes import guess_type
 from django.core.signing import TimestampSigner
 from email.mime.image import MIMEImage
 from pathlib import Path
+from .views import send_reset_email_signal
 
 User = get_user_model()
 signer = TimestampSigner()
@@ -51,3 +52,32 @@ def send_activation_email(user_id):
 def user_post_save(sender, instance, created, **kwargs):
     if created and not instance.is_active:
         enqueue(send_activation_email, instance.id)
+
+
+@receiver(send_reset_email_signal)
+def send_reset_password_email(sender, user, **kwargs):
+    token = signer.sign(user.pk)
+    reset_link = f"{settings.FRONTEND_URL}/reset_password/{token}"
+
+    html_content = render_to_string("emails/password_reset.html", {
+        "user": user,
+        "reset_link": reset_link,
+    })
+
+    email = EmailMultiAlternatives(
+        subject="Passwort zurücksetzen",
+        body="Du hast dein Passwort zurücksetzen angefordert.",
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        to=[user.email]
+    )
+    email.attach_alternative(html_content, "text/html")
+
+    image_path = Path(settings.BASE_DIR) / "templates" / "emails" / "logo.png"
+    if image_path.exists():
+        with open(image_path, "rb") as img:
+            mime_img = MIMEImage(img.read())
+            mime_img.add_header("Content-ID", "<logo_img>")
+            mime_img.add_header("Content-Disposition", "inline", filename="logo.png")
+            email.attach(mime_img)
+
+    email.send()

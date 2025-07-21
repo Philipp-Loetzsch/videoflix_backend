@@ -6,15 +6,17 @@ from .serializers import (
     RegisterSerializer,
     ActivateUserSerializer,
     CustomTokenObtainPairSerializer,
+    ForgotPasswordSerializer,
 )
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 from django.contrib.auth import get_user_model
+from django.dispatch import Signal
 
 signer = TimestampSigner()
 User = get_user_model()
-
+send_reset_email_signal = Signal()
 
 class CheckUserExistsView(GenericAPIView):
     permission_classes = [AllowAny]
@@ -43,9 +45,6 @@ class RegisterView(GenericAPIView):
             return Response(data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 
 class ActivateUserView(GenericAPIView):
@@ -128,3 +127,19 @@ class CookieTokenRefreshView(TokenRefreshView):
         )
 
         return response
+
+class ForgotPasswordView(GenericAPIView):
+    serializer_class = ForgotPasswordSerializer
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+
+        try:
+            user = User.objects.get(email=email)
+            send_reset_email_signal.send(sender=self.__class__, user=user)
+        except User.DoesNotExist:
+            pass
+
+        return Response(status=200)

@@ -87,3 +87,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError({"detail": "Invalid credentials"})
 
         return super().validate({"username": user.username, "password": password})
+
+class ForgotPasswordSerializer(serializers.Serializer):
+     email = serializers.EmailField()
