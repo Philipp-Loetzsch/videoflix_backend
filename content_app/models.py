@@ -45,7 +45,7 @@ class Video(models.Model):
     )
     preview = models.FileField(upload_to=preview_upload_path, max_length=255, blank=True, null=False)
     thumbnail = models.ImageField(upload_to=thumbnail_upload_path, max_length=255, blank=True, null=True, help_text="Vorschaubild")
-
+    preview_title = models.CharField(max_length=50, help_text="short preview text of video e.g. Pokemon", blank=True, null=True)
     category = models.CharField(
         choices=CATEGORY_CHOICES,
         default="Other",

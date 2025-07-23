@@ -2,9 +2,10 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
+from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
 
 User = get_user_model()
-
+signer = TimestampSigner()
 
 class CheckUserSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
@@ -90,3 +91,26 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 class ForgotPasswordSerializer(serializers.Serializer):
      email = serializers.EmailField()
+     
+     def validate_email(self, value):
+        if not User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("This email is not registered")
+        return value
+
+class ChangePasswordSerializer(serializers.Serializer):
+    token = serializers.CharField()
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    repeated_new_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, data):
+        if data["new_password"] != data["repeated_new_password"]:
+            raise serializers.ValidationError("Passwords don't match.")
+
+        try:
+            user_id = signer.unsign(data["token"], max_age=60 * 60 * 24)
+            user = User.objects.get(pk=user_id)
+        except (BadSignature, SignatureExpired, User.DoesNotExist):
+            raise serializers.ValidationError({"detail": "Invalid or expired token."})
+
+        data["user"] = user 
+        return data

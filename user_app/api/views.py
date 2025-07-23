@@ -7,6 +7,7 @@ from .serializers import (
     ActivateUserSerializer,
     CustomTokenObtainPairSerializer,
     ForgotPasswordSerializer,
+    ChangePasswordSerializer
 )
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -143,3 +144,18 @@ class ForgotPasswordView(GenericAPIView):
             pass
 
         return Response(status=200)
+    
+class ChangePasswordView(GenericAPIView):
+ 
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data["user"]
+        new_password = serializer.validated_data["new_password"]
+
+        user.set_password(new_password)
+        user.save()
+        return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
