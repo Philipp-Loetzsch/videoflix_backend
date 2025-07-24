@@ -1,20 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
-  <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-    <div style="background: white; padding: 20px; border-radius: 8px; max-width: 600px; margin: auto;">
-      <div style="text-align: center;">
-        <img src="cid:logo_img" alt="Logo" style="max-width: 150px; margin-bottom: 20px;">
+  <body
+    style="
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      padding: 20px;
+    "
+  >
+    <div
+      style="
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: auto;
+      "
+    >
+      <div style="text-align: center">
+        <img
+          src="cid:logo_img"
+          alt="Logo"
+          style="max-width: 150px; margin-bottom: 20px"
+        />
       </div>
-      <h2>Hallo {{ user.username }},</h2>
-      <p>Vielen Dank für deine Registrierung.</p>
-      <p>Bitte bestätige deine E-Mail-Adresse durch Klick auf den folgenden Button:</p>
-      <p style="text-align: center; margin: 30px 0;">
-        <a href="{{ activation_link }}" 
-           style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+      <h2>Dear {{ user.username }},</h2>
+      <p>
+        Thank you for registering with
+        <span style="color: #007bff">Videoflix</span>. To complete your
+        registration and verify your email address, please click the link
+        below:.
+      </p>
+
+      <p style="text-align: center; margin: 30px 0">
+        <a
+          href="{{ activation_link }}"
+          style="
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+          "
+        >
           Account aktivieren
         </a>
       </p>
-      <p>Wenn du dich nicht registriert hast, ignoriere diese E-Mail bitte.</p>
+      <p>
+        If you did not create an account with us, please disregard this email.
+      </p>
+      <p>Best regards,</p>
+      <p>Your Videoflix Team</p>
     </div>
   </body>
 </html>
