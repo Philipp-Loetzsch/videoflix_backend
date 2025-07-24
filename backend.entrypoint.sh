@@ -39,8 +39,8 @@ else:
 EOF
 
 python manage.py rqworker default &
-python manage.py rqworker fast &
-python manage.py rqworker heavy &
+# python manage.py rqworker fast &
+# python manage.py rqworker heavy &
 
 exec gunicorn core.wsgi:application \
   --bind 0.0.0.0:8000 \

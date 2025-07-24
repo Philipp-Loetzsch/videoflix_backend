@@ -11,8 +11,8 @@ import time
 def video_post_save(sender, instance, created, **kwargs):
     if created:
         queueDefault = django_rq.get_queue('default', autocommit=True)
-        queueHeavy = django_rq.get_queue('heavy', autocommit=True)
-        queueFast = django_rq.get_queue('fast', autocommit=True)
+        queueHeavy = django_rq.get_queue('default', autocommit=True)
+        queueFast = django_rq.get_queue('default', autocommit=True)
         video_id = instance.id
 
         queueHeavy.enqueue(convert_to_hls, video_id)
