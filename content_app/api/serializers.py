@@ -12,6 +12,7 @@ class VideoSerializer(serializers.ModelSerializer):
             'file',
             'preview',
             'thumbnail',
+            'preview_title',
             'duration',
             'category',
             'created_at',
