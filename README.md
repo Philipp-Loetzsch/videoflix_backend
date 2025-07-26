@@ -2,7 +2,7 @@
 
 Frontend siehe link:
 
-[Videoflix-frontend]https://github.com/Philipp-Loetzsch/videoflix_frontend
+[Videoflix-frontend](https://github.com/Philipp-Loetzsch/videoflix_frontend)
 
 ## Table of Contents
 
