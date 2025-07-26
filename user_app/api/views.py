@@ -1,6 +1,7 @@
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
 from .serializers import (
     CheckUserSerializer,
     RegisterSerializer,
@@ -14,6 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 from django.contrib.auth import get_user_model
 from django.dispatch import Signal
+from rest_framework_simplejwt.tokens import RefreshToken
 
 signer = TimestampSigner()
 User = get_user_model()
@@ -126,7 +128,20 @@ class CookieTokenRefreshView(TokenRefreshView):
             secure=True,
             samesite="None",
         )
+        return response
 
+class CookieTokenRemoveView(APIView):
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.COOKIES.get("refresh_token")
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+
+        response = Response({"detail": "Logout erfolgreich"})
+        response.delete_cookie("refresh_token")
         return response
 
 class ForgotPasswordView(GenericAPIView):

@@ -54,6 +54,8 @@ INSTALLED_APPS = [
     'user_app.apps.UserAppConfig',
     'content_app.apps.ContentAppConfig',
     'django_filters',
+    'rest_framework_simplejwt.token_blacklist',
+
 ]
 
 MIDDLEWARE = [
@@ -67,6 +69,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 CORS_ALLOWED_ORIGINS = [
