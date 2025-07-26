@@ -9,7 +9,7 @@ urlpatterns =[
     path('login/', CookieTokenObtainPairView.as_view(), name='login'),
     path('token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('register/', RegisterView.as_view(), name='register'),
-    path('activate/', ActivateUserView.as_view(), name='activate'),
-    path('forgotpassword/', ForgotPasswordView.as_view(), name='forgot-password'),
-    path('resetpassword/', ChangePasswordView.as_view(), name='password-reset'),
+    path('activate/<uidb64>/<token>/', ActivateUserView.as_view(), name='activate'),
+    path('password_reset/', ForgotPasswordView.as_view(), name='password-reset'),
+    path('password_confirm/<uidb64>/<token>/', ChangePasswordView.as_view(), name='password-confirm'),
 ]

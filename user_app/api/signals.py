@@ -3,16 +3,16 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 from django_rq import enqueue
 from django.template.loader import render_to_string
-from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
-from rest_framework.authtoken.models import Token
 from pathlib import Path
-from mimetypes import guess_type
 from django.core.signing import TimestampSigner
 from email.mime.image import MIMEImage
 from pathlib import Path
 from .views import send_reset_email_signal
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
 
 User = get_user_model()
 signer = TimestampSigner()
@@ -22,9 +22,9 @@ def send_activation_email(user_id):
         user = User.objects.get(pk=user_id)
     except User.DoesNotExist:
         return
-
-    token = signer.sign(user.pk)
-    activation_link = f"{settings.FRONTEND_URL}/activate/{token}"
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    activation_link = f"{settings.FRONTEND_URL}/activate/{uidb64}/{token}"
 
     html_content = render_to_string("emails/account_activation.html", {
         "user": user,
@@ -32,8 +32,8 @@ def send_activation_email(user_id):
     })
 
     email = EmailMultiAlternatives(
-        subject="Aktiviere deinen Account",
-        body="Bitte aktiviere deinen Account, indem du auf den Button klickst.",
+        subject="Activate your account",
+        body="Please activate your account by clicking on the button.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email]
     )
@@ -56,8 +56,9 @@ def user_post_save(sender, instance, created, **kwargs):
 
 @receiver(send_reset_email_signal)
 def send_reset_password_email(sender, user, **kwargs):
-    token = signer.sign(user.pk)
-    reset_link = f"{settings.FRONTEND_URL}/reset_password/{token}"
+    uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
+    token = default_token_generator.make_token(user)
+    reset_link = f"{settings.FRONTEND_URL}/reset_password/{uidb64}/{token}"
 
     html_content = render_to_string("emails/password_reset.html", {
         "user": user,
@@ -65,8 +66,8 @@ def send_reset_password_email(sender, user, **kwargs):
     })
 
     email = EmailMultiAlternatives(
-        subject="Passwort zurücksetzen",
-        body="Du hast dein Passwort zurücksetzen angefordert.",
+        subject="reset password",
+        body="You have requested a password reset.",
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email]
     )

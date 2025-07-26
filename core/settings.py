@@ -231,3 +231,5 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(seconds=30),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     }
+
+PASSWORD_RESET_TIMEOUT = 60 * 60 * 24

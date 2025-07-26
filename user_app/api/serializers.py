@@ -2,7 +2,9 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth import get_user_model
-from django.core.signing import TimestampSigner, BadSignature, SignatureExpired
+from django.core.signing import TimestampSigner
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
 
 User = get_user_model()
 signer = TimestampSigner()
@@ -98,6 +100,7 @@ class ForgotPasswordSerializer(serializers.Serializer):
         return value
 
 class ChangePasswordSerializer(serializers.Serializer):
+    uidb64 = serializers.CharField()
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True, min_length=8)
     repeated_new_password = serializers.CharField(write_only=True, min_length=8)
@@ -107,10 +110,13 @@ class ChangePasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError("Passwords don't match.")
 
         try:
-            user_id = signer.unsign(data["token"], max_age=60 * 60 * 24)
-            user = User.objects.get(pk=user_id)
-        except (BadSignature, SignatureExpired, User.DoesNotExist):
+            uid = urlsafe_base64_decode(data["uidb64"]).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            raise serializers.ValidationError({"detail": "Invalid user ID."})
+
+        if not default_token_generator.check_token(user, data["token"]):
             raise serializers.ValidationError({"detail": "Invalid or expired token."})
 
-        data["user"] = user 
+        data["user"] = user
         return data

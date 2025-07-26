@@ -5,17 +5,18 @@ from rest_framework.views import APIView
 from .serializers import (
     CheckUserSerializer,
     RegisterSerializer,
-    ActivateUserSerializer,
     CustomTokenObtainPairSerializer,
     ForgotPasswordSerializer,
     ChangePasswordSerializer
 )
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
+from django.core.signing import TimestampSigner
 from django.contrib.auth import get_user_model
 from django.dispatch import Signal
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
 
 signer = TimestampSigner()
 User = get_user_model()
@@ -49,30 +50,25 @@ class RegisterView(GenericAPIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
 class ActivateUserView(GenericAPIView):
-    permission_classes = [AllowAny]  
-    serializer_class = ActivateUserSerializer
+    permission_classes = [AllowAny]
 
-    def post(self, request):
-        token = request.data.get("token")
-        if not token:
-            return Response({"detail": "no token found"}, status=400)
+    def get(self, request, uidb64, token):
         try:
-            user_pk = signer.unsign(token, max_age=86400) 
-            user = User.objects.get(pk=user_pk)
-        except (SignatureExpired, BadSignature, User.DoesNotExist):
-            return Response(
-                {"detail": "invalid token."}, status=400
-            )
+            uid = urlsafe_base64_decode(uidb64).decode()
+            user = User.objects.get(pk=uid)
+        except (User.DoesNotExist, ValueError, TypeError):
+            return Response({"message": "Ungültiger Link"}, status=400)
 
         if user.is_active:
-            return Response({"detail": "User alreade activatet"}, status=400)
+            return Response({"message": "Benutzer ist bereits aktiviert."}, status=400)
 
-        user.is_active = True
-        user.save()
-        return Response({"detail": "Account activate."}, status=200)
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({"message": "Account successfully activated."}, status=200)
 
+        return Response({"message": "Aktivierung fehlgeschlagen."}, status=400)
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
@@ -159,18 +155,23 @@ class ForgotPasswordView(GenericAPIView):
             pass
 
         return Response(status=200)
-    
+
 class ChangePasswordView(GenericAPIView):
- 
     serializer_class = ChangePasswordSerializer
     permission_classes = [AllowAny]
-    def post(self, request):
-        serializer = self.get_serializer(data=request.data)
+
+    def post(self, request, uidb64, token):
+        data = {
+            "uidb64": uidb64,
+            "token": token,
+            "new_password": request.data.get("new_password"),
+            "repeated_new_password": request.data.get("repeated_new_password"),
+        }
+        serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         user = serializer.validated_data["user"]
-        new_password = serializer.validated_data["new_password"]
-
-        user.set_password(new_password)
+        user.set_password(serializer.validated_data["new_password"])
         user.save()
-        return Response({"detail": "Password changed successfully."}, status=status.HTTP_200_OK)
+
+        return Response({"detail": "Your Password has been successfully reset."}, status=200)
