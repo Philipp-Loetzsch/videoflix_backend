@@ -1,13 +1,5 @@
 # Videoflix - Docker Setup
 
-Dies ist ein Docker Setup, dass dir die Entwicklung und uns die Abnahme des Videoflix Projektes erleichtern soll.
-
-Vor der Verwendung schaue dir bitte die einführenden Videos unter:
-
-[Link zu Videos](https://developer-akademie.teachable.com/courses/enrolled/1656501)
-
-dazu an.
-
 ## Table of Contents
 
 <!-- TOC -->
