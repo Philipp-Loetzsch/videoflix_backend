@@ -6,8 +6,10 @@ from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 import os
 from django.views import View
-from django.http import FileResponse, Http404
+from django.http import FileResponse, Http404, HttpResponse
 from django.conf import settings
+from rest_framework.views import APIView
+from .mixins import CORSMixin
 
 
 class VideoViewSet(viewsets.ModelViewSet):
@@ -24,27 +26,33 @@ class VideoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
-class HLSSegmentView(View):
-    permisson_classes = [IsAdminOrReadOnlyForAuthenticated]
+class HLSSegmentView(CORSMixin, APIView):
+    permission_classes = [IsAdminOrReadOnlyForAuthenticated]
 
     def get(self, request, movie_id, resolution, segment):
         try:
             video = Video.objects.get(pk=movie_id)
         except Video.DoesNotExist:
             raise Http404("Video nicht gefunden")
+        
         video_folder = f"{video.title}_{video.uuid}"
         filename = f"{resolution}_{segment}"
         segment_path = os.path.join(
             settings.MEDIA_ROOT, "videos", video_folder, "hls", filename
         )
-        print(f"Suche Segment unter: {segment_path}")
+        
         if not os.path.exists(segment_path):
             raise Http404("Segment nicht gefunden")
 
-        return FileResponse(open(segment_path, "rb"), content_type="video/MP2T")
+        response = FileResponse(open(segment_path, "rb"), content_type="video/MP2T")
+        response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
+        response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
 
-class HLSPlaylistView(View):
-    permisson_classes = [IsAdminOrReadOnlyForAuthenticated]
+class HLSPlaylistView(CORSMixin, APIView):
+    permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    
     def get(self, request, movie_id, resolution):
         try:
             video = Video.objects.get(pk=movie_id)
@@ -62,9 +70,29 @@ class HLSPlaylistView(View):
             filename
         )
 
-        print(f"Pfad zur Playlist: {playlist_path}")
-
         if not os.path.exists(playlist_path):
             raise Http404("Playlist nicht gefunden")
 
-        return FileResponse(open(playlist_path, "rb"), content_type="application/vnd.apple.mpegurl")
+        with open(playlist_path, 'r') as f:
+            content = f.read()
+            # Stelle sicher, dass die Segmentpfade absolut sind
+            content = content.replace(
+                'videos/',
+                'https://v-backend.webdevelopment-loetzsch.de/media/videos/'
+            )
+
+        response = FileResponse(
+            content.encode(), 
+            content_type="application/vnd.apple.mpegurl"
+        )
+        response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
+        response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
+
+    def options(self, request, *args, **kwargs):
+        response = HttpResponse()
+        response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
+        response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "*"
+        return response
