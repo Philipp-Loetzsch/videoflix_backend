@@ -2,7 +2,7 @@ from ..models import Video
 from rest_framework import viewsets
 from .serializers import VideoSerializer
 from .permissions import IsAdminOrReadOnlyForAuthenticated
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, AuthenticationFailed
 from rest_framework.response import Response
 import os
 from django.views import View
@@ -10,10 +10,12 @@ from django.http import FileResponse, Http404, HttpResponse
 from django.conf import settings
 from rest_framework.views import APIView
 from .mixins import CORSMixin
+from user_app.authentication import CookieJWTAuthentication
 
 
 class VideoViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
 
@@ -27,7 +29,8 @@ class VideoViewSet(viewsets.ModelViewSet):
 
 
 class HLSSegmentView(CORSMixin, APIView):
-    permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
 
     def get(self, request, movie_id, resolution, segment):
         try:
@@ -51,7 +54,8 @@ class HLSSegmentView(CORSMixin, APIView):
         return response
 
 class HLSPlaylistView(CORSMixin, APIView):
-    permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+    authentication_classes = [CookieJWTAuthentication]
     
     def get(self, request, movie_id, resolution):
         try:
@@ -75,7 +79,6 @@ class HLSPlaylistView(CORSMixin, APIView):
 
         with open(playlist_path, 'r') as f:
             content = f.read()
-            # Stelle sicher, dass die Segmentpfade absolut sind
             content = content.replace(
                 'videos/',
                 'https://v-backend.webdevelopment-loetzsch.de/media/videos/'
