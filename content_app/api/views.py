@@ -54,6 +54,14 @@ class HLSSegmentView(CORSMixin, APIView):
         response["Access-Control-Allow-Credentials"] = "true"
         return response
 
+    def options(self, request, *args, **kwargs):
+        response = HttpResponse()
+        response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
+        response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+        response["Access-Control-Allow-Headers"] = "*"
+        response["Access-Control-Allow-Credentials"] = "true"
+        return response
+
 class HLSPlaylistView(CORSMixin, APIView):
     # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
@@ -80,6 +88,7 @@ class HLSPlaylistView(CORSMixin, APIView):
 
         with open(playlist_path, 'r') as f:
             content = f.read()
+            # First ensure all relative paths are converted to absolute HTTPS URLs
             content = content.replace(
                 'videos/',
                 'https://v-backend.webdevelopment-loetzsch.de/media/videos/'
@@ -88,6 +97,11 @@ class HLSPlaylistView(CORSMixin, APIView):
             content = content.replace(
                 'http://v-backend.webdevelopment-loetzsch.de',
                 'https://v-backend.webdevelopment-loetzsch.de'
+            )
+            # Handle any absolute paths that might not have the domain
+            content = content.replace(
+                '/media/videos/',
+                'https://v-backend.webdevelopment-loetzsch.de/media/videos/'
             )
 
         response = FileResponse(
