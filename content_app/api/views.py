@@ -51,6 +51,7 @@ class HLSSegmentView(CORSMixin, APIView):
         response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
         response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
         response["Access-Control-Allow-Headers"] = "*"
+        response["Access-Control-Allow-Credentials"] = "true"
         return response
 
 class HLSPlaylistView(CORSMixin, APIView):
@@ -83,6 +84,11 @@ class HLSPlaylistView(CORSMixin, APIView):
                 'videos/',
                 'https://v-backend.webdevelopment-loetzsch.de/media/videos/'
             )
+            # Replace any remaining HTTP URLs with HTTPS
+            content = content.replace(
+                'http://v-backend.webdevelopment-loetzsch.de',
+                'https://v-backend.webdevelopment-loetzsch.de'
+            )
 
         response = FileResponse(
             content.encode(), 
@@ -91,6 +97,7 @@ class HLSPlaylistView(CORSMixin, APIView):
         response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
         response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
         response["Access-Control-Allow-Headers"] = "*"
+        response["Access-Control-Allow-Credentials"] = "true"
         return response
 
     def options(self, request, *args, **kwargs):
@@ -98,4 +105,5 @@ class HLSPlaylistView(CORSMixin, APIView):
         response["Access-Control-Allow-Origin"] = "https://videoflix.webdevelopment-loetzsch.de"
         response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
         response["Access-Control-Allow-Headers"] = "*"
+        response["Access-Control-Allow-Credentials"] = "true"
         return response
