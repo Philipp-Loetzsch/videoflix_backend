@@ -4,6 +4,7 @@ from pathlib import Path
 from content_app.models import Video
 from core import settings
 from .ffmpeg_utils import run_ffmpeg_task
+import ffmpeg
 
 def get_video_duration(path: Path) -> float:
     cmd = [
@@ -29,12 +30,68 @@ def get_video_resolution(path: Path) -> tuple[int, int]:
     width, height = map(int, result.stdout.strip().split(','))
     return width, height
 
+# def convert_to_hls(video_id):
+#     video = Video.objects.get(id=video_id)
+#     source_path = video.file.path
+#     base_dir = os.path.dirname(source_path)
+#     hls_dir = os.path.join(base_dir, "hls")
+#     os.makedirs(hls_dir, exist_ok=True)
+
+#     resolutions = {
+#         "480p": {"scale": "854:480", "bitrate": "1400k"},
+#         "720p": {"scale": "1280:720", "bitrate": "2800k"},
+#         # "1080p": {"scale": "1920:1080", "bitrate": "5000k"},
+#     }
+
+#     playlist_entries = []
+#     for label, opts in resolutions.items():
+#         out_path = os.path.join(hls_dir, f"{label}.m3u8")
+#         segment_path = os.path.join(hls_dir, f"{label}_%03d.ts")
+#         vf_filter = (
+#             f"scale={opts['scale']}:force_original_aspect_ratio=decrease,"
+#             f"pad={opts['scale']}:(ow-iw)/2:(oh-ih)/2"
+#         )
+#         cmd = [
+#             "ffmpeg",
+#             "-i", source_path,
+#             "-vf", vf_filter,
+#             "-c:a", "aac",
+#             "-ar", "48000",
+#             "-c:v", "h264",
+#             "-profile:v", "main",
+#             "-crf", "20",
+#             "-sc_threshold", "0",
+#             "-g", "48",
+#             "-keyint_min", "48",
+#             "-b:v", opts["bitrate"],
+#             "-maxrate", opts["bitrate"],
+#             "-bufsize", "4200k",
+#             "-b:a", "128k",
+#             "-hls_time", "4",
+#             "-hls_playlist_type", "vod",
+#             "-hls_segment_filename", segment_path,
+#             out_path,
+#         ]
+#         subprocess.run(cmd, capture_output=True)
+#         playlist_entries.append({
+#             "resolution": opts["scale"],
+#             "bandwidth": opts["bitrate"].replace("k", "000"),
+#             "filename": f"{label}.m3u8",
+#         })
+
+#     create_master_path(hls_dir, playlist_entries, source_path)
 def convert_to_hls(video_id):
     video = Video.objects.get(id=video_id)
     source_path = video.file.path
     base_dir = os.path.dirname(source_path)
     hls_dir = os.path.join(base_dir, "hls")
     os.makedirs(hls_dir, exist_ok=True)
+
+
+    probe = ffmpeg.probe(source_path)
+    video_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
+    width = int(video_stream["width"])
+    height = int(video_stream["height"])
 
     resolutions = {
         "480p": {"scale": "854:480", "bitrate": "1400k"},
@@ -44,10 +101,14 @@ def convert_to_hls(video_id):
 
     playlist_entries = []
     for label, opts in resolutions.items():
+        target_width, target_height = map(int, opts["scale"].split(":"))
+        if width < target_width or height < target_height:
+            continue
+
         out_path = os.path.join(hls_dir, f"{label}.m3u8")
         segment_path = os.path.join(hls_dir, f"{label}_%03d.ts")
         vf_filter = (
-            f"scale={opts['scale']}:force_original_aspect_ratio=decrease,"
+            f"scale={opts['scale']}:force_original_aspect_ratio=decrease," 
             f"pad={opts['scale']}:(ow-iw)/2:(oh-ih)/2"
         )
         cmd = [
