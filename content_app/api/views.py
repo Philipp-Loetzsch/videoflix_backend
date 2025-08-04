@@ -25,7 +25,13 @@ class VideoViewSet(viewsets.ModelViewSet):
         except:
             raise NotFound({"error": "video does not exist or is removed."})
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        data = serializer.data
+
+        # HTTPS-URL erzwingen, falls .file vorhanden
+        if hasattr(instance, 'file') and hasattr(instance.file, 'url'):
+         data['file'] = request.build_absolute_uri(instance.file.url).replace("http://", "https://")
+
+        return Response(data)
 
 
 class HLSSegmentView(CORSMixin, APIView):
