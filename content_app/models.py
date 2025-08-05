@@ -28,10 +28,10 @@ def thumbnail_upload_path(instance, filename):
 
 class Video(models.Model):
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    title = models.CharField(max_length=255, help_text="Titel des Videos")
-    description = models.TextField(help_text="Beschreibung des Inhalts")
+    title = models.CharField(max_length=255, help_text="title of the video")
+    description = models.TextField(help_text="description of the video", blank=True, null=True)
     file = models.FileField(
-        upload_to=video_upload_path, help_text="Hochgeladene Videodatei", max_length=300
+        upload_to=video_upload_path, help_text="uploadet video file", max_length=300
     )
     hls_playlist = models.FileField(
         upload_to=video_upload_path,
@@ -41,17 +41,17 @@ class Video(models.Model):
         max_length=500,
     )
     duration = models.PositiveIntegerField(
-        default=0, help_text="Dauer in Sekunden", blank=True
+        default=0, help_text="Duration in seconds", blank=True
     )
     preview = models.FileField(upload_to=preview_upload_path, max_length=255, blank=True, null=False)
-    thumbnail = models.ImageField(upload_to=thumbnail_upload_path, max_length=255, blank=True, null=True, help_text="Vorschaubild")
+    thumbnail = models.ImageField(upload_to=thumbnail_upload_path, max_length=255, blank=True, null=True, help_text="thumbnail")
     preview_title = models.CharField(max_length=50, help_text="short preview text of video e.g. Pokemon", blank=True, null=True)
     category = models.CharField(
         choices=CATEGORY_CHOICES,
         default="Other",
-        help_text="Hauptkategorie",
+        help_text="Main category of the video",
     )
-    created_at = models.DateTimeField(auto_now_add=True, help_text="Erstellungsdatum")
+    created_at = models.DateTimeField(auto_now_add=True, help_text="date of creation")
 
     def __str__(self):
         return f"{self.title} ({self.get_category_display()})"
