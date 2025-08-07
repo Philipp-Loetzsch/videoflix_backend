@@ -6,111 +6,146 @@ from core import settings
 from .ffmpeg_utils import run_ffmpeg_task
 import ffmpeg
 
-def get_video_duration(path: Path) -> float:
-    cmd = [
-        "ffprobe",
-        "-v", "error",
-        "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1",
-        str(path),
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    return float(result.stdout.strip())
+def _get_video_and_paths(video_id: int):
+    """
+    Loads the Video object and creates the necessary file paths.
+    Returns the Video object, source path, and HLS folder
+    or None values on errors.
+    """
+    try:
+        video = Video.objects.get(id=video_id)
+        source_path = Path(video.file.path)
+        if not source_path.exists():
+            return None, None, None
+    except Video.DoesNotExist:
+        return None, None, None
+    
+    hls_dir = source_path.parent / "hls"
+    hls_dir.mkdir(exist_ok=True)
+    return video, source_path, hls_dir
 
-def get_video_resolution(path: Path) -> tuple[int, int]:
-    cmd = [
-        "ffprobe",
-        "-v", "error",
-        "-select_streams", "v:0",
-        "-show_entries", "stream=width,height",
-        "-of", "csv=p=0",
-        str(path),
-    ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    width, height = map(int, result.stdout.strip().split(','))
-    return width, height
+def _probe_video_metadata(source_path: Path):
+    """
+    Probes the video file for metadata like resolution and duration.
+    Returns the metadata as a tuple or None on errors.
+    """
+    try:
+        probe = ffmpeg.probe(str(source_path))
+        video_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
+        source_width = int(video_stream["width"])
+        source_height = int(video_stream["height"])
+        duration_seconds = float(probe['format']['duration'])
+        return source_width, source_height, duration_seconds
+    except (ffmpeg.Error, StopIteration, ValueError, KeyError) as e:
+        return None
 
-def convert_to_hls(video_id):
-    video = Video.objects.get(id=video_id)
-    source_path = video.file.path
-    base_dir = os.path.dirname(source_path)
-    hls_dir = os.path.join(base_dir, "hls")
-    os.makedirs(hls_dir, exist_ok=True)
+def _process_resolution(source_path: Path, hls_dir: Path, label: str, opts: dict, source_dims: tuple):
+    """
+    Converts the video to a specific resolution and bitrate.
+    Returns a dictionary with playlist data or None on errors/skipping.
+    """
+    source_width, source_height = source_dims
+    target_width, target_height = map(int, opts["scale"].split("x"))
 
+    # Skip conversion if the target resolution is higher than the source
+    if source_width < target_width or source_height < target_height:
+        return None
 
-    probe = ffmpeg.probe(source_path)
-    video_stream = next(s for s in probe["streams"] if s["codec_type"] == "video")
-    width = int(video_stream["width"])
-    height = int(video_stream["height"])
+    try:
+        output_file = hls_dir / f"{label}.m3u8"
+        segment_path = hls_dir / f"{label}_%03d.ts"
+        
+        # Select video and audio streams explicitly
+        stream = ffmpeg.input(str(source_path))
+        video_stream = stream.video
+        audio_stream = stream.audio
 
-    resolutions = {
-        "480p": {"scale": "854:480", "bitrate": "1400k"},
-        "720p": {"scale": "1280:720", "bitrate": "2800k"},
-        "1080p": {"scale": "1920:1080", "bitrate": "5000k"},
-    }
-
-    playlist_entries = []
-    for label, opts in resolutions.items():
-        target_width, target_height = map(int, opts["scale"].split(":"))
-        if width < target_width or height < target_height:
-            continue
-
-        out_path = os.path.join(hls_dir, f"{label}.m3u8")
-        segment_path = os.path.join(hls_dir, f"{label}_%03d.ts")
-        vf_filter = (
-            f"scale={opts['scale']}:force_original_aspect_ratio=decrease," 
-            f"pad={opts['scale']}:(ow-iw)/2:(oh-ih)/2"
+        # Process the video stream
+        video_processed = (
+            video_stream
+            .filter('scale', target_width, target_height, force_original_aspect_ratio='decrease')
+            .filter('pad', target_width, target_height, '(ow-iw)/2', '(oh-ih)/2')
         )
-        cmd = [
-            "ffmpeg",
-            "-i", source_path,
-            "-vf", vf_filter,
-            "-c:a", "aac",
-            "-ar", "48000",
-            "-c:v", "h264",
-            "-profile:v", "main",
-            "-crf", "20",
-            "-sc_threshold", "0",
-            "-g", "48",
-            "-keyint_min", "48",
-            "-b:v", opts["bitrate"],
-            "-maxrate", opts["bitrate"],
-            "-bufsize", "4200k",
-            "-b:a", "128k",
-            "-hls_time", "4",
-            "-hls_playlist_type", "vod",
-            "-hls_segment_filename", segment_path,
-            out_path,
-        ]
-        subprocess.run(cmd, capture_output=True)
-        playlist_entries.append({
-            "resolution": opts["scale"],
-            "bandwidth": opts["bitrate"].replace("k", "000"),
-            "filename": f"{label}.m3u8",
-        })
+        
+        # Combine video and audio streams into the output
+        (
+            ffmpeg
+            .output(
+                video_processed,
+                audio_stream,
+                str(output_file),
+                vcodec='libx264', acodec='aac', **{'b:v': opts['bitrate'], 'profile:v': 'main', 'sc_threshold': 0, 'g': 48,
+                                                  'keyint_min': 48, 'hls_time': 4, 'hls_playlist_type': 'vod',
+                                                  'hls_segment_filename': str(segment_path), 'ar': 48000,
+                                                  'b:a': '128k', 'maxrate': opts['bitrate'], 'bufsize': '4200k'}
+            )
+            .overwrite_output()
+            .run(capture_stdout=True, capture_stderr=True)
+        )
+        return {"resolution": opts["scale"], "bandwidth": opts["bitrate"].replace("k", "000"), "filename": f"{label}.m3u8"}
+    except ffmpeg.Error as e:
+        return None
 
-    create_master_path(hls_dir, playlist_entries, source_path)
-
-def create_master_path(hls_dir, playlist_entries, source_path):
-    master_path = Path(hls_dir) / "master.m3u8"
+def _create_master_playlist(hls_dir: Path, playlist_entries: list):
+    """
+    Creates the master playlist file from all generated playlists.
+    """
+    if not playlist_entries:
+        return None
+        
+    master_path = hls_dir / "master.m3u8"
     with master_path.open("w") as f:
         f.write("#EXTM3U\n")
+        f.write("#EXT-X-VERSION:3\n")
         for entry in playlist_entries:
-            f.write(
-                f'#EXT-X-STREAM-INF:BANDWIDTH={entry["bandwidth"]},RESOLUTION={entry["resolution"]}\n'
-            )
+            f.write(f'#EXT-X-STREAM-INF:BANDWIDTH={entry["bandwidth"]},RESOLUTION={entry["resolution"]}\n')
             f.write(f'{entry["filename"]}\n')
+    return master_path
 
+def _update_django_model(video, master_path: Path, duration: float):
+    """
+    Updates the Django model with the paths and duration.
+    """
     media_root = Path(settings.MEDIA_ROOT)
     relative_path = master_path.relative_to(media_root)
-    video_file_rel = Path(source_path).relative_to(media_root)
 
-    video = Video.objects.get(file=str(video_file_rel))
     video.hls_playlist.name = str(relative_path)
-
-    duration_seconds = get_video_duration(source_path)
-    video.duration = int(duration_seconds)
+    video.duration = int(duration)
     video.save(update_fields=["hls_playlist", "duration"])
+
+def convert_to_hls(video_id: int):
+    """
+    Orchestrates the entire HLS conversion process.
+    """
+    video, source_path, hls_dir = _get_video_and_paths(video_id)
+    if not video:
+        return
+
+    # NEW: Check for WebP files, as they cannot be converted
+    if source_path.suffix.lower() == '.webp':
+        return
+        
+    metadata = _probe_video_metadata(source_path)
+    if not metadata:
+        return
+    source_width, source_height, duration_seconds = metadata
+
+    resolutions = {
+        "360p": {"scale": "640x360", "bitrate": "800k"},
+        "480p": {"scale": "854x480", "bitrate": "1400k"},
+        "720p": {"scale": "1280x720", "bitrate": "2800k"},
+        "1080p": {"scale": "1920x1080", "bitrate": "5000k"},
+    }
+    
+    playlist_entries = []
+    for label, opts in resolutions.items():
+        entry = _process_resolution(source_path, hls_dir, label, opts, (source_width, source_height))
+        if entry:
+            playlist_entries.append(entry)
+
+    master_path = _create_master_playlist(hls_dir, playlist_entries)
+    if master_path:
+        _update_django_model(video, master_path, duration_seconds)
 
 def create_thumbnail(video_id):
     video = Video.objects.get(id=video_id)
@@ -137,6 +172,30 @@ def create_thumbnail(video_id):
         ffmpeg_args=args,
         model_field="thumbnail",
     )
+
+def get_video_resolution(path: Path) -> tuple[int, int]:
+    cmd = [
+        "ffprobe",
+        "-v", "error",
+        "-select_streams", "v:0",
+        "-show_entries", "stream=width,height",
+        "-of", "csv=p=0",
+        str(path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    width, height = map(int, result.stdout.strip().split(','))
+    return width, height
+
+def get_video_duration(path: Path) -> float:
+    cmd = [
+        "ffprobe",
+        "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        str(path),
+    ]
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    return float(result.stdout.strip())
 
 def create_preview(video_id):
     video = Video.objects.get(id=video_id)
