@@ -105,10 +105,28 @@ class HLSSegmentView(CORSMixin, APIView):
         return response
 
 class HLSPlaylistView(CORSMixin, APIView):
+    """
+    View for serving HLS playlists with CORS support.
+    Uses cookie-based JWT authentication.
+    """
     # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
     
     def get(self, request, movie_id, resolution):
+        """
+        Get the HLS playlist for a specific video and resolution.
+        
+        Args:
+            request: The HTTP request
+            movie_id: ID of the video
+            resolution: Video resolution (e.g., '720p')
+            
+        Returns:
+            FileResponse: The M3U8 playlist file with appropriate CORS headers
+            
+        Raises:
+            Http404: If video or playlist is not found
+        """
         try:
             video = Video.objects.get(pk=movie_id)
         except Video.DoesNotExist:

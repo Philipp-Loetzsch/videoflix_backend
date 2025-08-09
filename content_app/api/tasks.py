@@ -116,6 +116,18 @@ def _update_django_model(video, master_path: Path, duration: float):
 def convert_to_hls(video_id: int):
     """
     Orchestrates the entire HLS conversion process.
+    
+    Converts a video file to HLS format with multiple quality levels.
+    Creates a master playlist and individual stream playlists.
+    
+    Args:
+        video_id (int): The ID of the Video model instance to convert
+        
+    Note:
+        - Generates streams for 360p, 480p, 720p, and 1080p if source resolution allows
+        - Skips resolutions higher than the source video
+        - Creates HLS segments and playlists in a 'hls' subdirectory
+        - Updates the Video model with the master playlist path and duration
     """
     video, source_path, hls_dir = _get_video_and_paths(video_id)
     if not video:
@@ -148,6 +160,19 @@ def convert_to_hls(video_id: int):
         _update_django_model(video, master_path, duration_seconds)
 
 def create_thumbnail(video_id):
+    """
+    Create a thumbnail image from a video.
+    
+    Takes a frame at 5 seconds into the video and saves it as a JPEG image.
+    
+    Args:
+        video_id (int): The ID of the Video model instance
+        
+    Note:
+        - Creates thumbnails in a 'thumbnails' subdirectory
+        - Skips if thumbnail already exists
+        - Updates the Video model's thumbnail field
+    """
     video = Video.objects.get(id=video_id)
     source = Path(video.file.path)
     thumbnail_dir = source.parent / "thumbnails"
@@ -174,6 +199,15 @@ def create_thumbnail(video_id):
     )
 
 def get_video_resolution(path: Path) -> tuple[int, int]:
+    """
+    Get the resolution (width and height) of a video file.
+    
+    Args:
+        path (Path): Path to the video file
+        
+    Returns:
+        tuple[int, int]: A tuple containing (width, height) in pixels
+    """
     cmd = [
         "ffprobe",
         "-v", "error",
@@ -187,6 +221,15 @@ def get_video_resolution(path: Path) -> tuple[int, int]:
     return width, height
 
 def get_video_duration(path: Path) -> float:
+    """
+    Get the duration of a video file in seconds.
+    
+    Args:
+        path (Path): Path to the video file
+        
+    Returns:
+        float: The duration of the video in seconds
+    """
     cmd = [
         "ffprobe",
         "-v", "error",
@@ -198,6 +241,21 @@ def get_video_duration(path: Path) -> float:
     return float(result.stdout.strip())
 
 def create_preview(video_id):
+    """
+    Create a 20-second preview video clip.
+    
+    Creates a preview starting at 25% of the video duration,
+    scaled to either 1080p or 720p depending on source resolution.
+    
+    Args:
+        video_id (int): The ID of the Video model instance
+        
+    Note:
+        - Creates previews in a 'preview' subdirectory
+        - Skips if preview already exists
+        - Updates the Video model's preview field
+        - Uses H.264 video codec and AAC audio codec
+    """
     video = Video.objects.get(id=video_id)
     source = Path(video.file.path)
     preview_dir = source.parent / "preview"
