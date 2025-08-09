@@ -1,10 +1,13 @@
-# Videoflix - Docker Setup
+# Videoflix Backend - Schritt-für-Schritt Anleitung
 
-Frontend siehe link:
+> [!IMPORTANT]
+> **Lies diese Anleitung vollständig durch, bevor du beginnst!**
 
-[Videoflix-frontend](https://github.com/Philipp-Loetzsch/videoflix_frontend)
+Dieses Repository enthält den Backend-Teil der Videoflix-Anwendung. 
 
-## Table of Contents
+Das zugehörige Frontend findest du hier: [Videoflix-frontend](https://github.com/Philipp-Loetzsch/videoflix_frontend)
+
+## Inhaltsverzeichnis
 
 <!-- TOC -->
 
@@ -24,76 +27,136 @@ Frontend siehe link:
 
 ## Voraussetzungen
 
-- **Docker** mit **docker-compose** installiert.
+Bevor du beginnst, stelle sicher, dass du Folgendes installiert hast:
 
-    Siehe [Anleitung](https://docs.docker.com/compose/install/) zur Installation.
+### 1. Docker Desktop
 
-    Erforderlich für den Start des Projekts, da es vollständig containerisiert ist.
+- **Windows/Mac**: Lade [Docker Desktop](https://www.docker.com/products/docker-desktop/) herunter und installiere es
+- **Linux**: Folge der [Docker Engine Installation](https://docs.docker.com/engine/install/)
+- **WICHTIG**: Nach der Installation musst du Docker Desktop starten!
+- **Test**: Öffne ein Terminal und führe aus:
+  ```bash
+  docker --version
+  docker-compose --version
+  ```
+  Beide Befehle sollten eine Versionsnummer anzeigen.
 
-- **git** ist installiert.
+### 2. Git
 
-    Siehe [Anleitung](https://git-scm.com/downloads) zur Installation.
+- Lade Git von [git-scm.com](https://git-scm.com/downloads) herunter und installiere es
+- **Test**: Öffne ein Terminal und führe aus:
+  ```bash
+  git --version
+  ```
+  Der Befehl sollte eine Versionsnummer anzeigen.
 
-    Erforderlich, um das Projekt herunterzuladen.
+### 3. Code Editor
+
+- Empfohlen: [Visual Studio Code](https://code.visualstudio.com/)
+- **WICHTIG**: Stelle in VS Code sicher, dass die Datei `backend.entrypoint.sh` mit "LF" (nicht CRLF) Zeilenenden gespeichert ist!
 
 ---
 
-## Quickstart
+## Installation & Setup
 
 > [!CAUTION]
-> <span style="color: red;">Bitte halte dich genau an die hier beschriebene Anleitung. Wenn du die grundlegene
-Konfiguration veränderst, kann das Projekt unter Umständen nicht gestartet werden.</span>
+> ### ⚠️ WICHTIGE REGELN - BITTE BEACHTEN ⚠️
+> 
+> 1. **NICHT VERÄNDERN:**
+>    - `backend.Dockerfile`
+>    - `docker-compose.yml`
+>    - `backend.entrypoint.sh`
+>    - Die grundlegende Konfiguration in `settings.py`
 >
-> <span style="color: red;">Du kannst Variablen in der `.env` Datei verändern oder neue hinzufügen. Bitte lösche keine
-der vorhandenen Variablen.</span>
+> 2. **VORSICHT BEI:**
+>    - `.env` Datei: Du kannst Werte ändern, aber **NICHT** existierende Variablen löschen
+>    - `settings.py`: Nur neue Einstellungen hinzufügen, bestehende nicht ändern
 >
-> <span style="color: red;">Bitte ändere nichts, an den im weiteren Verlauf, angegebenen Einträgen in der `settings.py`.</span>
->
-> <span style="color: red;">Bitte nimm keine Änderungen an den Dateien `backend.Dockerfile`, `docker-compose` und `backend.entrypoint.sh` vor!<ins></span>
->
-> <span style="color: red;">Du kannst (und musst), weitere Packages installieren und auch entsprechende Änderungen an
-der `settings.py` Datei vornehmen. <ins>Achte darauf deine `requirements.txt` Datei regelmäßig zu aktualisieren.<ins></span>
+> 3. **ERLAUBT UND ERFORDERLICH:**
+>    - Neue Packages installieren
+>    - `requirements.txt` regelmäßig aktualisieren
+>    - Neue Einstellungen in `settings.py` hinzufügen
 
-1. **Definiere die Umgebungsvariablen, unter Benutzung der [.env.template](./.env.template) Datei**. Nutze hierzu die
-`git bash Komandozeile`.
+### Schritt 1: Projekt klonen
+
+1. Öffne ein Terminal
+2. Navigiere zu deinem gewünschten Projektordner
+3. Führe aus:
+   ```bash
+   git clone https://github.com/Philipp-Loetzsch/videoflix_backend.git
+   cd videoflix_backend
+   ```
+
+### Schritt 2: Umgebungsvariablen einrichten
+
+1. Öffne das Projekt in VS Code:
+   ```bash
+   code .
+   ```
+
+2. Kopiere die Vorlage für Umgebungsvariablen:
+   ```bash
+   cp .env.template .env
+   ```
+
+3. Öffne die neue `.env` Datei und passe die Werte an deine Bedürfnisse an
 
     ```bash
     # Erstellt eine .env-Datei mit dem Inhalt von .env.template
     cp .env.template .env
     ```
 
-1. **Build and start the project using `docker-compose`.**
+### Schritt 3: Docker Container starten
 
-```bash
-docker-compose up --build
-```
+1. **WICHTIG**: Stelle sicher, dass Docker Desktop läuft!
 
--> falls das nicht funktioniert, verwende (ohne "-")
-```bash
-docker compose up --build
-```
+2. Terminal öffnen und im Projektordner ausführen:
+   ```bash
+   docker compose up --build
+   ```
+   
+   Falls dieser Befehl nicht funktioniert, versuche stattdessen:
+   ```bash
+   docker-compose up --build
+   ```
 
-Open application in browser on [localhost:8000](http://localhost:8000).
+3. Warte, bis alle Container gestartet sind. Du siehst viele Log-Ausgaben - das ist normal!
+
+4. Teste die Anwendung:
+   - Öffne [localhost:8000](http://localhost:8000) im Browser
+   - Du solltest die API-Oberfläche sehen
+
+> [!TIP]
+> Um die Container zu stoppen, drücke `Strg+C` im Terminal
+> 
+> Um sie wieder zu starten (ohne neu zu bauen), verwende:
+> ```bash
+> docker compose up
+> ```
 
 ---
 
-## Usage
+## Konfiguration & Nutzung
 
-### Environment Variablen
-
-Alle erforderlichen Umgebungsvariablen werden in der [.env](./.env) Datei gespeichert.
+### Environment Variablen (.env)
 
 > [!IMPORTANT]
-> Bitte verändere die Namen der Variablen in dieser Konfiguration nicht. Dies kann unter Umständen dazu führen, dass wir
-das Projekt nicht prüfen und abnehmen können.
->
-> Ändere bereits vorhandene Variablen gegebenenfalls mit sinnvollen Werten
+> - **NICHT** die Variablennamen in der `.env` ändern
+> - **NICHT** existierende Variablen löschen
+> - Du **DARFST** die Werte der Variablen anpassen
+> - Du **DARFST** neue Variablen hinzufügen
 
----
+#### Automatischer Admin-Benutzer
 
-> [!NOTE]
-> [backend.entrypoint.sh](backend.entrypoint.sh) erstellt automatisch einen Superuser basierend auf den
-Umgebungsvariablen **`DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD` und `DJANGO_SUPERUSER_EMAIL`**
+Die `backend.entrypoint.sh` erstellt automatisch einen Administrator mit diesen Zugangsdaten:
+
+```env
+DJANGO_SUPERUSER_USERNAME=admin    # Standard: "admin"
+DJANGO_SUPERUSER_PASSWORD=xxxxx    # Wähle ein sicheres Passwort!
+DJANGO_SUPERUSER_EMAIL=xxx@xxx.xx  # Deine E-Mail-Adresse
+```
+
+#### Wichtige Konfigurationen
 
 | Name | Type | Description | Default | Mandatory |
 | :--- | :---: | :---------- | :----- | :---: |
@@ -121,69 +184,109 @@ Umgebungsvariablen **`DJANGO_SUPERUSER_USERNAME`, `DJANGO_SUPERUSER_PASSWORD` un
 | **EMAIL_HOST_PASSWORD** | str | Passwort für das E-Mail-Konto. Achte auf die Sicherheit. | `your_email_password` | x |
 | **DEFAULT_FROM_EMAIL** | str | E-Mailadresse die von Django verwendet wird | `EMAIL_HOST_USER` |   |
 
-### Migrations im Docker Container
+### Datenbankmigrationen durchführen
 
-Um gemachte Änderungen an der Datenbankstruktur an Docker zu übertragen hast du zwei verschiedene Möglichkeiten:
+Wenn du Änderungen an den Models gemacht hast, musst du diese auf die Datenbank anwenden.
 
-1. Docker Container komplett neu erstellen (nicht empfohlen)
+#### Methode 1: Migration im laufenden Container (EMPFOHLEN)
 
-    - stoppe Docker in der Kommandozeile mit der Tastenkombination `Strg+C`
-    - starte Docker neu mit dem Befehl `docker-compose up --build`
-    - falls `docker-compose up --build` nicht funktioniert, verwende `docker compose up --build`
+1. Migrations-Dateien erstellen:
+   ```bash
+   docker compose exec web python manage.py makemigrations
+   ```
 
-2. Führe die Migration direkt im Docker Container aus (besser)
+2. Migrations ausführen:
+   ```bash
+   docker compose exec web python manage.py migrate
+   ```
 
-    - erstelle die migrations Dateien direkt im Docker Container
+#### Methode 2: Container neu bauen (NICHT EMPFOHLEN)
 
-    ```bash
-    docker-compose exec web python manage.py makemigrations
-    ```
+Nur wenn Methode 1 nicht funktioniert:
 
-    Dieser Befehl wird direk in der Bash des Docker Containers ausgeführt. (Wir erinnern uns, unser Docker Setup
-    enthält im Prinzip ein komplettes Betriebssystem)
+1. Container stoppen mit `Strg+C`
+2. Neu bauen und starten:
+   ```bash
+   docker compose up --build
+   ```
 
-    - Führe die Migration aus:
+### Python-Packages verwalten
 
-    ```bash
-    docker-compose exec web python manage.py migrate
-    ```
+#### requirements.txt aktualisieren
 
-### requirements.txt
+1. Füge neue Packages in `requirements.txt` hinzu
+2. Container neu bauen:
+   ```bash
+   docker compose up --build
+   ```
 
-Die Dependencies der Anwendung sind in der Datei [requirements.txt](./requirements.txt) aufgeführt.
+#### Installierte Packages anzeigen
 
-Um sie in den Docker Container zu ändern, muss die Anwendung neu erstellt werden.
-
-Um nur die primären (Top-Level) Pakete aufzulisten, die du über `pip` installiert hast - ohne ihre Abhängigkeiten
-anzuzeigen - verwende:
-
+Nur Hauptpackages (ohne Abhängigkeiten):
 ```bash
-pip list --not-required
+docker compose exec web pip list --not-required
 ```
 
-## Troubleshooting
+Alle installierten Packages:
+```bash
+docker compose exec web pip list
+```
 
-- **Beim Starten von Docker erhalte ich in der Komandozeile diesen Fehler:**
+## Fehlerbehebung
 
-    ```bash
-    unable to get image 'postgres:latest': error during connect:
-    Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.48/images/postgres:latest/json":
-    open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
-    ```
+### ❌ "Docker Desktop" Fehler
+```bash
+unable to get image 'postgres:latest': error during connect:
+Get "http://%2F%2F.%2Fpipe%2FdockerDesktopLinuxEngine/v1.48/images/postgres:latest/json":
+open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+```
 
-    > [!NOTE]
-    > Bitte stelle sicher, dass du Docker Desktop gestartet hast.
+✅ **Lösung:**
+1. Docker Desktop öffnen
+2. Warten bis es vollständig gestartet ist
+3. Erneut versuchen
 
-- **Das Starten von Docker bricht mit der folgenden Meldung in der Konsole ab:**
+### ❌ "entrypoint.sh" Fehler
+```bash
+videoflix_backend   | exec ./backend.entrypoint.sh: no such file or directory
+videoflix_backend exited with code 255
+```
 
-    ```bash
-    videoflix_backend   | exec ./backend.entrypoint.sh: no such file or directory
-    videoflix_backend exited with code 255
-    ```
+✅ **Lösung:**
+1. VS Code öffnen
+2. `backend.entrypoint.sh` öffnen
+3. Unten rechts in der Statusleiste auf "CRLF" klicken
+4. "LF" auswählen
+5. Datei speichern
+6. Docker Container neu starten
 
-    > [!NOTE]
-    > Bitte stelle sicher, dass die Datei `backend.entrypoint.sh` mit der End of Line Sequence LF abgespeichert ist.
-    >
-    > Siehe [Google Suche](https://www.google.com/search?sca_esv=81208bf63503b115&rlz=1C1CHBF_deDE1069DE1069&q=cr+lf+lf+in+vscode&spell=1&sa=X&ved=2ahUKEwihofbto4eNAxXK9bsIHXhtCLYQBSgAegQIDxAB&biw=1920&bih=911&dpr=1)
+### ❌ Datenbank-Fehler
+```bash
+django.db.utils.OperationalError: FATAL: database "xxx" does not exist
+```
+
+✅ **Lösung:**
+1. Container stoppen (`Strg+C`)
+2. Docker Volumes löschen:
+   ```bash
+   docker compose down -v
+   ```
+3. Container neu starten:
+   ```bash
+   docker compose up --build
+   ```
+
+### ❌ Permission Denied
+```bash
+permission denied while trying to connect to the Docker daemon socket
+```
+
+✅ **Lösung:**
+- **Windows/Mac**: Docker Desktop neu starten
+- **Linux**: Führe die Befehle mit `sudo` aus oder füge deinen Benutzer zur Docker-Gruppe hinzu:
+  ```bash
+  sudo usermod -aG docker $USER
+  ```
+  (Danach abmelden und wieder anmelden)
 
 ---
