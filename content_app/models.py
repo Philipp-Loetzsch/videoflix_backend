@@ -15,14 +15,44 @@ CATEGORY_CHOICES = [
 
 
 def video_upload_path(instance, filename):
+    """
+    Generate the upload path for video files.
+    
+    Args:
+        instance: The Video model instance
+        filename (str): Original filename
+        
+    Returns:
+        str: The path where the video file should be stored
+    """
     return f"videos/{instance.title}_{instance.uuid}/{filename}"
 
 
 def preview_upload_path(instance, filename):
+    """
+    Generate the upload path for video preview files.
+    
+    Args:
+        instance: The Video model instance
+        filename (str): Original filename
+        
+    Returns:
+        str: The path where the preview file should be stored
+    """
     return f"videos/{instance.title}_{instance.uuid}/preview/{filename}"
 
 
 def thumbnail_upload_path(instance, filename):
+    """
+    Generate the upload path for video thumbnail images.
+    
+    Args:
+        instance: The Video model instance
+        filename (str): Original filename
+        
+    Returns:
+        str: The path where the thumbnail file should be stored
+    """
     return f"videos/{instance.title}_{instance.uuid}/thumbnails/{filename}"
 
 
@@ -54,6 +84,12 @@ class Video(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, help_text="date of creation")
 
     def __str__(self):
+        """
+        String representation of the Video model.
+        
+        Returns:
+            str: The title and category of the video
+        """
         return f"{self.title} ({self.get_category_display()})"
 
     class Meta:

@@ -220,7 +220,11 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-FRONTEND_URL = "https://videoflix.webdevelopment-loetzsch.de" 
+if DEBUG:
+    FRONTEND_URL = "http://localhost:4200"
+else:
+    FRONTEND_URL = "https://videoflix.webdevelopment-loetzsch.de" 
+
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

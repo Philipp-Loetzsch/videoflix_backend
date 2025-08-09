@@ -14,12 +14,29 @@ from user_app.authentication import CookieJWTAuthentication
 
 
 class VideoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for handling Video model CRUD operations.
+    Uses cookie-based JWT authentication.
+    """
     # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
 
     def retrieve(self, request, *args, **kwargs):
+        """
+        Retrieve a single video instance.
+        
+        Args:
+            request: The HTTP request
+            *args, **kwargs: Additional arguments
+            
+        Returns:
+            Response: The serialized video data with HTTPS URLs
+            
+        Raises:
+            NotFound: If the video doesn't exist or has been removed
+        """
         try:
             instance = self.get_object()
         except:
@@ -35,10 +52,29 @@ class VideoViewSet(viewsets.ModelViewSet):
 
 
 class HLSSegmentView(CORSMixin, APIView):
+    """
+    View for serving HLS video segments with CORS support.
+    Uses cookie-based JWT authentication.
+    """
     # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
 
     def get(self, request, movie_id, resolution, segment):
+        """
+        Get a specific HLS video segment.
+        
+        Args:
+            request: The HTTP request
+            movie_id: ID of the video
+            resolution: Video resolution (e.g., '720p')
+            segment: The segment filename
+            
+        Returns:
+            FileResponse: The video segment file with appropriate CORS headers
+            
+        Raises:
+            Http404: If video or segment is not found
+        """
         try:
             video = Video.objects.get(pk=movie_id)
         except Video.DoesNotExist:
