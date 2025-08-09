@@ -1,8 +1,7 @@
 from ..models import Video
 from rest_framework import viewsets
 from .serializers import VideoSerializer
-from .permissions import IsAdminOrReadOnlyForAuthenticated
-from rest_framework.exceptions import NotFound, AuthenticationFailed
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 import os
 from django.views import View
@@ -18,7 +17,6 @@ class VideoViewSet(viewsets.ModelViewSet):
     ViewSet for handling Video model CRUD operations.
     Uses cookie-based JWT authentication.
     """
-    # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
@@ -44,7 +42,6 @@ class VideoViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         data = serializer.data
 
-        # HTTPS-URL erzwingen, falls .file vorhanden
         if hasattr(instance, 'file') and hasattr(instance.file, 'url'):
          data['file'] = request.build_absolute_uri(instance.file.url).replace("http://", "https://")
 
@@ -56,7 +53,6 @@ class HLSSegmentView(CORSMixin, APIView):
     View for serving HLS video segments with CORS support.
     Uses cookie-based JWT authentication.
     """
-    # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
     authentication_classes = [CookieJWTAuthentication]
 
     def get(self, request, movie_id, resolution, segment):
@@ -109,7 +105,7 @@ class HLSPlaylistView(CORSMixin, APIView):
     View for serving HLS playlists with CORS support.
     Uses cookie-based JWT authentication.
     """
-    # permission_classes = [IsAdminOrReadOnlyForAuthenticated]
+
     authentication_classes = [CookieJWTAuthentication]
     
     def get(self, request, movie_id, resolution):
@@ -148,17 +144,14 @@ class HLSPlaylistView(CORSMixin, APIView):
 
         with open(playlist_path, 'r') as f:
             content = f.read()
-            # First ensure all relative paths are converted to absolute HTTPS URLs
             content = content.replace(
                 'videos/',
                 'https://v-backend.webdevelopment-loetzsch.de/media/videos/'
             )
-            # Replace any remaining HTTP URLs with HTTPS
             content = content.replace(
                 'http://v-backend.webdevelopment-loetzsch.de',
                 'https://v-backend.webdevelopment-loetzsch.de'
             )
-            # Handle any absolute paths that might not have the domain
             content = content.replace(
                 '/media/videos/',
                 'https://v-backend.webdevelopment-loetzsch.de/media/videos/'

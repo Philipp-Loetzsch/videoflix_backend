@@ -133,7 +133,6 @@ def convert_to_hls(video_id: int):
     if not video:
         return
 
-    # NEW: Check for WebP files, as they cannot be converted
     if source_path.suffix.lower() == '.webp':
         return
         
