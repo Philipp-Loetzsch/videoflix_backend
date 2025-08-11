@@ -2,6 +2,7 @@ from rest_framework import serializers
 from ..models import Video
 
 class VideoSerializer(serializers.ModelSerializer):
+    """Serializer for Video model with all relevant fields."""
     class Meta:
         model = Video
         fields = [

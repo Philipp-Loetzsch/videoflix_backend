@@ -23,17 +23,12 @@ User = get_user_model()
 send_reset_email_signal = Signal()
 
 class CheckUserExistsView(GenericAPIView):
-    """
-    API view to check if a user exists based on provided data.
-    """
+    """Check if user exists by email."""
     permission_classes = [AllowAny]
     serializer_class = CheckUserSerializer
 
     def post(self, request, *args, **kwargs):
-        """
-        Check if the user exists with the given data.
-        Returns True if valid, otherwise False.
-        """
+        """Check email existence, return True if exists."""
         serializer = CheckUserSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(False, status=status.HTTP_200_OK)
@@ -41,17 +36,12 @@ class CheckUserExistsView(GenericAPIView):
 
 
 class RegisterView(GenericAPIView):
-    """
-    API view to register a new user account.
-    """
+    """Handle user registration."""
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
 
     def post(self, request):
-        """
-        Register a new user with the provided data.
-        Returns the username and email if successful, otherwise errors.
-        """
+        """Create new inactive user account."""
         serializer = self.get_serializer(data=request.data)
         data = {}
         if serializer.is_valid():
@@ -65,16 +55,11 @@ class RegisterView(GenericAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class ActivateUserView(GenericAPIView):
-    """
-    API view to activate a user account via email link.
-    """
+    """Activate user account via token."""
     permission_classes = [AllowAny]
 
     def get(self, request, uidb64, token):
-        """
-        Activate the user account if the token is valid.
-        Returns a message indicating the result.
-        """
+        """Validate token and activate user."""
         try:
             uid = urlsafe_base64_decode(uidb64).decode()
             user = User.objects.get(pk=uid)
@@ -92,16 +77,11 @@ class ActivateUserView(GenericAPIView):
         return Response({"message": "Aktivierung fehlgeschlagen."}, status=400)
 
 class CookieTokenObtainPairView(TokenObtainPairView):
-    """
-    API view to obtain JWT tokens and set them as cookies.
-    """
+    """Login view that sets JWT tokens as cookies."""
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
-        """
-        Obtain JWT access and refresh tokens and set them as cookies.
-        Returns a message on successful login.
-        """
+        """Set JWT tokens as secure cookies on login."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -123,14 +103,9 @@ class CookieTokenObtainPairView(TokenObtainPairView):
 
 
 class CookieTokenRefreshView(TokenRefreshView):
-    """
-    API view to refresh JWT access token using the refresh token from cookies.
-    """
+    """Refresh JWT token from cookie."""
     def post(self, request, *args, **kwargs):
-        """
-        Refresh the JWT access token using the refresh token from cookies.
-        Returns a message on success or error details.
-        """
+        """Get new access token using refresh token cookie."""
         refresh_token = request.COOKIES.get("refresh_token")
 
         if refresh_token is None:
@@ -162,14 +137,9 @@ class CookieTokenRefreshView(TokenRefreshView):
         return response
 
 class CookieTokenRemoveView(APIView):
-    """
-    API view to remove JWT tokens from cookies and blacklist the refresh token.
-    """
+    """Logout view that removes JWT cookies."""
     def post(self, request, *args, **kwargs):
-        """
-        Blacklist the refresh token and remove it from cookies to log out the user.
-        Returns a logout confirmation message.
-        """
+        """Remove JWT cookies and blacklist refresh token."""
         refresh_token = request.COOKIES.get("refresh_token")
         if refresh_token:
             try:
@@ -183,16 +153,11 @@ class CookieTokenRemoveView(APIView):
         return response
 
 class ForgotPasswordView(GenericAPIView):
-    """
-    API view to handle forgot password requests and send reset emails.
-    """
+    """Handle password reset requests."""
     serializer_class = ForgotPasswordSerializer
     permission_classes = [AllowAny]
     def post(self, request):
-        """
-        Send a password reset email if the user with the given email exists.
-        Always returns 200 status for security reasons.
-        """
+        """Send password reset email if user exists."""
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data["email"]
@@ -206,17 +171,12 @@ class ForgotPasswordView(GenericAPIView):
         return Response(status=200)
 
 class ChangePasswordView(GenericAPIView):
-    """
-    API view to change/reset the user's password using a token.
-    """
+    """Reset password using token."""
     serializer_class = ChangePasswordSerializer
     permission_classes = [AllowAny]
 
     def post(self, request, uidb64, token):
-        """
-        Change the user's password if the token is valid.
-        Returns a confirmation message on success.
-        """
+        """Validate token and set new password."""
         data = {
             "uidb64": uidb64,
             "token": token,

@@ -94,17 +94,20 @@ Bevor du beginnst, stelle sicher, dass du Folgendes installiert hast:
    code .
    ```
 
-2. Kopiere die Vorlage für Umgebungsvariablen:
+2. Erstelle und konfiguriere die Umgebungsvariablen:
    ```bash
+   # Kopiere die Vorlage für Umgebungsvariablen
    cp .env.template .env
+
+   # Öffne die Datei in VS Code
+   code .env
    ```
 
-3. Öffne die neue `.env` Datei und passe die Werte an deine Bedürfnisse an
-
-    ```bash
-    # Erstellt eine .env-Datei mit dem Inhalt von .env.template
-    cp .env.template .env
-    ```
+3. Passe die Werte in der `.env` Datei an:
+   - Setze ein sicheres Admin-Passwort
+   - Konfiguriere die Datenbank-Zugangsdaten
+   - Stelle die E-Mail-Einstellungen ein
+   - Speichere die Datei
 
 ### Schritt 3: Docker Container starten
 

@@ -10,80 +10,35 @@ User = get_user_model()
 signer = TimestampSigner()
 
 class CheckUserSerializer(serializers.Serializer):
-    """
-    Serializer for checking if a user exists by email.
-    """
+    """Check user existence by email."""
     email = serializers.EmailField(required=True)
 
     def validate_email(self, value):
-        """
-        Validate if a user with the given email exists.
-        
-        Args:
-            value (str): The email to validate
-            
-        Returns:
-            str: The validated email if user exists
-            
-        Raises:
-            ValidationError: If no user with this email exists
-        """
+        """Validate email existence."""
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("User with this email does not exist.")
         return value
 
 class RegisterSerializer(serializers.Serializer):
-    """
-    Serializer for registering new users with email and password.
-    """
+    """Handle new user registration."""
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=8)
     repeated_password = serializers.CharField(write_only=True, min_length=8)
 
     def validate_email(self, value):
-        """
-        Validate that the email is not already registered.
-        
-        Args:
-            value (str): The email to validate
-            
-        Returns:
-            str: The validated email if not already registered
-            
-        Raises:
-            ValidationError: If a user with this email already exists
-        """
+        """Check if email is not already registered."""
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("User does already exist.")
         return value
 
     def validate(self, data):
-        """
-        Validate that both passwords match.
-        
-        Args:
-            data (dict): The data to validate containing both passwords
-            
-        Returns:
-            dict: The validated data if passwords match
-            
-        Raises:
-            ValidationError: If passwords don't match
-        """
+        """Validate that passwords match."""
         if data["password"] != data["repeated_password"]:
             raise serializers.ValidationError("Passwords don't match.")
         return data
 
     def create(self, validated_data):
-        """
-        Create and save a new inactive user.
-        
-        Args:
-            validated_data (dict): The validated user data
-            
-        Returns:
-            User: The created user instance
-        """
+        """Create and save new inactive user."""
         email = validated_data["email"]
         password = validated_data["password"]
         username = email.split("@")[0]
@@ -115,34 +70,19 @@ class ActivateUserSerializer(serializers.Serializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    """
-    Custom token obtain pair serializer that uses email for authentication instead of username.
-    """
+    """Token serializer using email for authentication."""
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
     def __init__(self, *args, **kwargs):
-        """
-        Initialize the serializer and remove username field.
-        """
+        """Remove username field."""
         super().__init__(*args, **kwargs)
 
         if "username" in self.fields:
             self.fields.pop("username")
 
     def validate(self, attrs):
-        """
-        Validate the email and password for authentication.
-        
-        Args:
-            attrs (dict): The attributes to validate containing email and password
-            
-        Returns:
-            dict: The validated data with tokens if credentials are valid
-            
-        Raises:
-            ValidationError: If credentials are invalid or user is disabled
-        """
+        """Validate email and password."""
         email = attrs.get("email")
         password = attrs.get("password")
 
@@ -161,55 +101,24 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return super().validate({"username": user.username, "password": password})
 
 class ForgotPasswordSerializer(serializers.Serializer):
-    """
-    Serializer for handling forgot password requests.
-    """
+    """Handle forgot password requests."""
     email = serializers.EmailField()
      
     def validate_email(self, value):
-        """
-        Validate that the email exists in the system.
-        
-        Args:
-            value (str): The email to validate
-            
-        Returns:
-            str: The validated email if it exists
-            
-        Raises:
-            ValidationError: If no user with this email is registered
-        """
+        """Check if email exists."""
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("This email is not registered")
         return value
 
 class ChangePasswordSerializer(serializers.Serializer):
-    """
-    Serializer for handling password change requests with token verification.
-    """
+    """Handle password change requests."""
     uidb64 = serializers.CharField()
     token = serializers.CharField()
     new_password = serializers.CharField(write_only=True, min_length=8)
     repeated_new_password = serializers.CharField(write_only=True, min_length=8)
 
     def validate(self, data):
-        """
-        Validate the password change request.
-        
-        Validates that:
-        - The new passwords match
-        - The user ID is valid
-        - The token is valid and not expired
-        
-        Args:
-            data (dict): The data to validate containing passwords, token and user ID
-            
-        Returns:
-            dict: The validated data with user instance if all validations pass
-            
-        Raises:
-            ValidationError: If passwords don't match, user ID is invalid, or token is invalid/expired
-        """
+        """Validate password change request and token."""
         if data["new_password"] != data["repeated_new_password"]:
             raise serializers.ValidationError("Passwords don't match.")
 

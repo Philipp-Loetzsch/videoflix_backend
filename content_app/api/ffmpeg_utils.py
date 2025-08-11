@@ -5,21 +5,7 @@ from django.conf import settings
 
 
 def run_ffmpeg_task(video_id, target_subdir, filename_suffix, ffmpeg_args, model_field):
-    """
-    Run an ffmpeg command and update the video model with the result.
-    
-    Args:
-        video_id: The ID of the Video model instance
-        target_subdir (str): The subdirectory where output will be saved
-        filename_suffix (str): Suffix to append to the output filename
-        ffmpeg_args (callable): Function that returns ffmpeg command arguments
-        model_field (str): Name of the Video model field to update with the output path
-        
-    Note:
-        - Creates output directory if it doesn't exist
-        - Runs ffmpeg command with provided arguments
-        - Updates the specified Video model field with relative path to output
-    """
+    """Execute ffmpeg command and update video model with output path."""
     video = Video.objects.get(id=video_id)
     source_path = Path(video.file.path)
     filename = source_path.stem

@@ -5,7 +5,6 @@ import django_rq
 from content_app.api.tasks import convert_to_hls, create_thumbnail, create_preview
 from ..models import Video
 import shutil
-import time
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):

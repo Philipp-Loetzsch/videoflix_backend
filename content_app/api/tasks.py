@@ -47,7 +47,6 @@ def _process_resolution(source_path: Path, hls_dir: Path, label: str, opts: dict
     source_width, source_height = source_dims
     target_width, target_height = map(int, opts["scale"].split("x"))
 
-    # Skip conversion if the target resolution is higher than the source
     if source_width < target_width or source_height < target_height:
         return None
 
@@ -55,19 +54,15 @@ def _process_resolution(source_path: Path, hls_dir: Path, label: str, opts: dict
         output_file = hls_dir / f"{label}.m3u8"
         segment_path = hls_dir / f"{label}_%03d.ts"
         
-        # Select video and audio streams explicitly
         stream = ffmpeg.input(str(source_path))
         video_stream = stream.video
         audio_stream = stream.audio
 
-        # Process the video stream
         video_processed = (
             video_stream
             .filter('scale', target_width, target_height, force_original_aspect_ratio='decrease')
             .filter('pad', target_width, target_height, '(ow-iw)/2', '(oh-ih)/2')
         )
-        
-        # Combine video and audio streams into the output
         (
             ffmpeg
             .output(
@@ -114,21 +109,7 @@ def _update_django_model(video, master_path: Path, duration: float):
     video.save(update_fields=["hls_playlist", "duration"])
 
 def convert_to_hls(video_id: int):
-    """
-    Orchestrates the entire HLS conversion process.
-    
-    Converts a video file to HLS format with multiple quality levels.
-    Creates a master playlist and individual stream playlists.
-    
-    Args:
-        video_id (int): The ID of the Video model instance to convert
-        
-    Note:
-        - Generates streams for 360p, 480p, 720p, and 1080p if source resolution allows
-        - Skips resolutions higher than the source video
-        - Creates HLS segments and playlists in a 'hls' subdirectory
-        - Updates the Video model with the master playlist path and duration
-    """
+    """Convert video to HLS format with multiple quality levels."""
     video, source_path, hls_dir = _get_video_and_paths(video_id)
     if not video:
         return
@@ -159,19 +140,7 @@ def convert_to_hls(video_id: int):
         _update_django_model(video, master_path, duration_seconds)
 
 def create_thumbnail(video_id):
-    """
-    Create a thumbnail image from a video.
-    
-    Takes a frame at 5 seconds into the video and saves it as a JPEG image.
-    
-    Args:
-        video_id (int): The ID of the Video model instance
-        
-    Note:
-        - Creates thumbnails in a 'thumbnails' subdirectory
-        - Skips if thumbnail already exists
-        - Updates the Video model's thumbnail field
-    """
+    """Create thumbnail from video frame at 5 seconds."""
     video = Video.objects.get(id=video_id)
     source = Path(video.file.path)
     thumbnail_dir = source.parent / "thumbnails"
@@ -240,21 +209,7 @@ def get_video_duration(path: Path) -> float:
     return float(result.stdout.strip())
 
 def create_preview(video_id):
-    """
-    Create a 20-second preview video clip.
-    
-    Creates a preview starting at 25% of the video duration,
-    scaled to either 1080p or 720p depending on source resolution.
-    
-    Args:
-        video_id (int): The ID of the Video model instance
-        
-    Note:
-        - Creates previews in a 'preview' subdirectory
-        - Skips if preview already exists
-        - Updates the Video model's preview field
-        - Uses H.264 video codec and AAC audio codec
-    """
+    """Create 20-second preview video starting at 25% duration."""
     video = Video.objects.get(id=video_id)
     source = Path(video.file.path)
     preview_dir = source.parent / "preview"

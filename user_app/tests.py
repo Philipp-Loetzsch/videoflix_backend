@@ -122,3 +122,42 @@ class UserAuthenticationTests(APITestCase):
         # Check that the refresh_token cookie is either not present or empty
         self.assertTrue('refresh_token' not in response.cookies or 
                        not response.cookies['refresh_token'].value)
+
+    def test_invalid_login(self):
+        """Test login with invalid credentials."""
+        url = reverse('user_app:login')
+        invalid_data = {
+            'email': 'existing@example.com',
+            'password': 'wrongpassword'
+        }
+        response = self.client.post(url, invalid_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('detail', response.data)
+
+    def test_invalid_registration(self):
+        """Test registration with invalid data."""
+        url = reverse('user_app:register')
+        # Test with non-matching passwords
+        invalid_data = self.user_data.copy()
+        invalid_data['repeated_password'] = 'differentpass'
+        response = self.client.post(url, invalid_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+        # Test with existing email
+        invalid_data = self.user_data.copy()
+        invalid_data['email'] = 'existing@example.com'
+        response = self.client.post(url, invalid_data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_password_reset(self):
+        """Test password reset with invalid token."""
+        uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
+        invalid_token = 'invalid-token'
+        
+        url = reverse('user_app:password-confirm', kwargs={'uidb64': uidb64, 'token': invalid_token})
+        data = {
+            'new_password': 'newpass123',
+            'repeated_new_password': 'newpass123'
+        }
+        response = self.client.post(url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
