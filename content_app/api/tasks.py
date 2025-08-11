@@ -169,12 +169,6 @@ def create_thumbnail(video_id):
 def get_video_resolution(path: Path) -> tuple[int, int]:
     """
     Get the resolution (width and height) of a video file.
-    
-    Args:
-        path (Path): Path to the video file
-        
-    Returns:
-        tuple[int, int]: A tuple containing (width, height) in pixels
     """
     cmd = [
         "ffprobe",
@@ -191,12 +185,6 @@ def get_video_resolution(path: Path) -> tuple[int, int]:
 def get_video_duration(path: Path) -> float:
     """
     Get the duration of a video file in seconds.
-    
-    Args:
-        path (Path): Path to the video file
-        
-    Returns:
-        float: The duration of the video in seconds
     """
     cmd = [
         "ffprobe",

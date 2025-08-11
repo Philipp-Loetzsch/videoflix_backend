@@ -20,16 +20,6 @@ signer = TimestampSigner()
 def send_activation_email(user_id):
     """
     Send an account activation email to a newly registered user.
-    
-    Args:
-        user_id (int): The ID of the user to send the activation email to
-        
-    Returns:
-        None
-        
-    Note:
-        This function generates an activation token and sends an HTML email
-        with an activation link to the user's email address.
     """
     try:
         user = User.objects.get(pk=user_id)
@@ -65,12 +55,6 @@ def send_activation_email(user_id):
 def user_post_save(sender, instance, created, **kwargs):
     """
     Signal receiver that triggers when a user is created.
-    
-    Args:
-        sender: The model class (User)
-        instance: The actual user instance that was saved
-        created (bool): Whether this is a new instance
-        **kwargs: Additional keyword arguments
         
     This function queues an activation email to be sent when a new inactive user is created.
     """
@@ -82,11 +66,6 @@ def user_post_save(sender, instance, created, **kwargs):
 def send_reset_password_email(sender, user, **kwargs):
     """
     Signal receiver that sends a password reset email.
-    
-    Args:
-        sender: The class that sent the signal
-        user: The user requesting the password reset
-        **kwargs: Additional keyword arguments
         
     This function generates a password reset token and sends an HTML email
     with a reset link to the user's email address.

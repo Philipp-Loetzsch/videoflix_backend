@@ -49,7 +49,6 @@ class UserAuthenticationTests(APITestCase):
         self.assertTrue('refresh_token' in response.cookies)
 
     def test_user_activation(self):
-        # Create an inactive user
         inactive_user = User.objects.create_user(
             username="inactive",
             email="inactive@example.com",
@@ -58,7 +57,6 @@ class UserAuthenticationTests(APITestCase):
         inactive_user.is_active = False
         inactive_user.save()
 
-        # Generate activation token
         uidb64 = urlsafe_base64_encode(force_bytes(inactive_user.pk))
         token = default_token_generator.make_token(inactive_user)
         
@@ -75,7 +73,6 @@ class UserAuthenticationTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_change_password(self):
-        # Create activation token for password reset
         uidb64 = urlsafe_base64_encode(force_bytes(self.user.pk))
         token = default_token_generator.make_token(self.user)
         
@@ -91,15 +88,12 @@ class UserAuthenticationTests(APITestCase):
         self.assertTrue(self.user.check_password('newpass123'))
 
     def test_token_refresh(self):
-        # First login to get the refresh token
         login_url = reverse('user_app:login')
         login_data = {
             'email': 'existing@example.com',
             'password': 'existing123'
         }
         login_response = self.client.post(login_url, login_data)
-        
-        # Try to refresh the token
         refresh_url = reverse('user_app:token_refresh')
         response = self.client.post(refresh_url)
         
@@ -107,19 +101,15 @@ class UserAuthenticationTests(APITestCase):
         self.assertTrue('access_token' in response.cookies)
 
     def test_logout(self):
-        # First login to get the tokens
         login_url = reverse('user_app:login')
         login_data = {
             'email': 'existing@example.com',
             'password': 'existing123'
         }
         self.client.post(login_url, login_data)
-        
-        # Then try to logout
         url = reverse('user_app:logout')
         response = self.client.post(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Check that the refresh_token cookie is either not present or empty
         self.assertTrue('refresh_token' not in response.cookies or 
                        not response.cookies['refresh_token'].value)
 
@@ -137,13 +127,11 @@ class UserAuthenticationTests(APITestCase):
     def test_invalid_registration(self):
         """Test registration with invalid data."""
         url = reverse('user_app:register')
-        # Test with non-matching passwords
         invalid_data = self.user_data.copy()
         invalid_data['repeated_password'] = 'differentpass'
         response = self.client.post(url, invalid_data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
-        # Test with existing email
         invalid_data = self.user_data.copy()
         invalid_data['email'] = 'existing@example.com'
         response = self.client.post(url, invalid_data)
