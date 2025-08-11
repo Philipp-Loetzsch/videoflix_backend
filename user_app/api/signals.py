@@ -18,9 +18,7 @@ User = get_user_model()
 signer = TimestampSigner()
   
 def send_activation_email(user_id):
-    """
-    Send an account activation email to a newly registered user.
-    """
+    """Send activation email to new user."""
     try:
         user = User.objects.get(pk=user_id)
     except User.DoesNotExist:
@@ -53,23 +51,14 @@ def send_activation_email(user_id):
 
 @receiver(post_save, sender=User)
 def user_post_save(sender, instance, created, **kwargs):
-    """
-    Signal receiver that triggers when a user is created.
-        
-    This function queues an activation email to be sent when a new inactive user is created.
-    """
+    """Queue activation email for new users."""
     if created and not instance.is_active:
         enqueue(send_activation_email, instance.id)
 
 
 @receiver(send_reset_email_signal)
 def send_reset_password_email(sender, user, **kwargs):
-    """
-    Signal receiver that sends a password reset email.
-        
-    This function generates a password reset token and sends an HTML email
-    with a reset link to the user's email address.
-    """
+    """Send password reset email with token link."""
     uidb64 = urlsafe_base64_encode(force_bytes(user.pk))
     token = default_token_generator.make_token(user)
     reset_link = f"{settings.FRONTEND_URL}/reset_password/{uidb64}/{token}"

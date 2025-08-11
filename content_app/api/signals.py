@@ -8,6 +8,7 @@ import shutil
 
 @receiver(post_save, sender=Video)
 def video_post_save(sender, instance, created, **kwargs):
+    """Queue video processing tasks after creation."""
     if created:
         queueDefault = django_rq.get_queue('default', autocommit=True)
         queueHeavy = django_rq.get_queue('default', autocommit=True)
@@ -22,6 +23,7 @@ def video_post_save(sender, instance, created, **kwargs):
         
 @receiver(post_delete, sender=Video)
 def delete_folder_on_model_delete(sender, instance, **kwargs):
+    """Delete video folder on model deletion."""
     if instance.file:
         folder_path = os.path.dirname(instance.file.path)
         if os.path.isdir(folder_path):
